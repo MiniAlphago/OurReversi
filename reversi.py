@@ -12,7 +12,7 @@ class Board(object):
     str_pieces = {0: "   ", 1: " x ", 2: " o "}
     unicode_pieces = {0: "   ", 1: u" \u25cf ", 2: u" \u25cb "}
 
-    moveRE = re.compile(r'([a-h])([1-8])')
+    moveRE = re.compile(r'([a-h])([1-8])')  # @ST where to put a piece
 
     def __init__(self, *args, **kwargs):
         if not self.positions:
@@ -233,7 +233,7 @@ class Board(object):
         if not result:
             return
         c, r = result.groups()
-        return int(r) - 1, 'abcdefgh'.index(c)
+        return int(r) - 1, 'abcdefgh'.index(c)  # @ST return row and column
 
     def unpack_action(self, action):
         if action is None:

@@ -82,7 +82,7 @@ class Server(object):
 
                 elif data.get('state', {}).get('player') == self.local.player:
                     message = socket.recv(4096)
-                    messages = message.rstrip().split('\r\n')
+                    messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
                     self.parse(messages[0]) # FIXME: support for multiple messages
                                             #        or out-of-band requests
             except Exception as e:

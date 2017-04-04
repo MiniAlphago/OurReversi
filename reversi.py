@@ -30,6 +30,7 @@ class Board(object):
                 self.positions[(3,3)] + self.positions[(4,4)], 2, 1)
 
     def display(self, state, action, _unicode=True):
+        # @TODO we need a GUI here
         pieces = self.unicode_pieces if _unicode else self.str_pieces
 
         p1_placed, p2_placed, previous, player = state

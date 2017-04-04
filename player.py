@@ -27,12 +27,8 @@ class Client(object):
         self.socket = socket.create_connection((self.addr, self.port))
         self.running = True
         while self.running:
-            message = self.recv(4096)
-            print(message)  # @ST @BUG sometimes received incomplete message
-            print('\n\n')
-            print(len(message))
-            print('\n\n')
-            messages = message.rstrip().split('\r\n')
+            raw_message = self.recv(4096)
+            messages = raw_message.rstrip().split('\r\n')
             for message in messages:
                 data = json.loads(message)
                 if data['type'] not in self.receiver:

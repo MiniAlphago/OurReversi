@@ -137,9 +137,7 @@ class Server(object):
             self.players[x].put(data)  # @ST broadcast to all players
 
     def send(self, data):
-        #print("{0}\r\n".format(json.dumps(data)))  # @ST @BUG the message sent is correct, but clients sometimes receive incomplete message
         data_json = "{0}\r\n".format(json.dumps(data))
-        #self.local.socket.sendall("{0}\r\n".format(json.dumps(data)))
         self.local.socket.sendall(struct.pack('>i', len(data_json))+data_json)
 
     def recv(self, socket, recv_size):

@@ -1,12 +1,12 @@
-### Reversi Game
+# Reversi Game
 
-#### Dependencies
+## Dependencies
 * pygame
 * gevent
 
-#### How to run
+## How to run
 
-##### Run on localhost
+### Run on localhost
 First, run the server
 ``` sh
 python2 server.py
@@ -19,7 +19,7 @@ python2 player.py mcts   # for AI, @NOTE AI does not have gui by now
 ```
 Or you can run two AIs and watch them to play.
 
-##### Remote server
+### Remote server
 
 First, run the server
 ``` sh
@@ -31,10 +31,10 @@ Then, run two clients to play against each other
 python2 player.py human -g http://qcloud.stse.me 4242 # for human player, add -g flag to enable gui, you should specify address and port number
 python2 player.py mcts http://qcloud.stse.me 4242  # for AI, @NOTE AI does not have gui by now
 ```
-##### Note
-If you shut down one client, to make things work again, you have to shut down the server and the other client and then restart them.
+### Note
+If you shut down one client, to make things work again, you have to **shut down the server and the other client** and then restart them.
 
-#### Message Conventions
+## Message Conventions
 
 Message type:
 * player
@@ -45,7 +45,7 @@ Message type:
 * illegal
 
 Note: update message has the following keys: state, type, board, last_action, winners, and points.
-##### Examples
+### Examples
 
 When client connects to server, server sends the player number.
 ``` json

@@ -33,20 +33,20 @@ class Window(object):
             for j in xrange((self.height+self.bgph-1)/self.bgph):
                 self.window.blit(self.bgp, (i * self.bgpw, j * self.bgph))  # @ST draw the background tile by tile
 
-        self.update()
+        #self.update()
         self.done_background = True
 
     """ Should be included in a loop. """
-    def draw_suface(self, anchor=(0,0), pos=(0,0), suface=None):
+    def draw_surface(self, anchor=(0,0), pos=(0,0), surface=None):
         loc = (anchor[0]+pos[0], anchor[1]+pos[1])[::-1]  # reverse  order
-        if suface: self.window.blit(suface, loc)
+        if surface: self.window.blit(surface, loc)
 
-    def draw_grid(self, anchor=(0,0), block=(0,0), grid=[[]], suface=()):
+    def draw_grid(self, anchor=(0,0), block=(0,0), grid=[[]], surface=()):
         for i in range(len(grid)):
             for j in range(len(grid[0])):
                 loc = (anchor[0]+i*block[0], anchor[1]+j*block[1])[::-1]
-                self.window.blit(suface[-1], loc)
-                if grid[i][j] != -1: self.window.blit(suface[grid[i][j]], loc)
+                self.window.blit(surface[-1], loc)
+                if grid[i][j] != -1: self.window.blit(surface[grid[i][j]], loc)
 
 
 class Keyboard(object):
@@ -166,7 +166,9 @@ class Board(object):
 
     def draw_self(self, state):
         self.window.draw_grid(self.anchor, self.block_size, state, self.pieces)
-        self.window.draw_suface(self.anchor, (self.block_size[0]*self.cursor[0], self.block_size[1]*self.cursor[1]), self.cp)
+
+        # @ST @NOTE if you want to draw the cursor, uncomment the function call below
+        #self.window.draw_surface(self.anchor, (self.block_size[0]*self.cursor[0], self.block_size[1]*self.cursor[1]), self.cp)
 
 
 class ScoreBoard(object):
@@ -190,10 +192,10 @@ class ScoreBoard(object):
             self.status_text = next_status_text
             self.window.reset_background()
 
-    def draw_self(self, score):
+    def draw_self(self, score, status_text):
         # Drawing players' scores
         loc, padding_lr = [0, 0], self.window.width/100
-        self.window.draw_suface(self.anchor, tuple(loc), self.pieces[0])
+        self.window.draw_surface(self.anchor, tuple(loc), self.pieces[0])
 
         loc[1] += self.board.block_size[1]+padding_lr
         font = pygame.font.Font(None, 80)
@@ -202,14 +204,14 @@ class ScoreBoard(object):
         padding_tb = (self.board.block_size[0]-size[1])/2
         loc[0] += padding_tb
         ren = font.render(text, True, (0,0,0))
-        self.window.draw_suface(self.anchor, tuple(loc), ren)
+        self.window.draw_surface(self.anchor, tuple(loc), ren)
         loc[0] -= padding_tb
 
         loc[1] += size[0]+padding_lr
-        self.window.draw_suface(self.anchor, tuple(loc), self.pieces[1])
+        self.window.draw_surface(self.anchor, tuple(loc), self.pieces[1])
 
         # Drawing players' status
         loc = [self.board.block_size[0]+self.window.height/100, 0]
         font = pygame.font.Font(None, 30)
-        ren = font.render(self.status_text, True, (0,0,0))
-        self.window.draw_suface(self.anchor, tuple(loc), ren)
+        ren = font.render(status_text, True, (0,0,0))
+        self.window.draw_surface(self.anchor, tuple(loc), ren)

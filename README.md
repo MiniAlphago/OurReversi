@@ -13,10 +13,13 @@ python2 server.py
 
 Then, run two clients to play against each other
 ``` sh
-python2 player.py human  # for human player
-python2 player.py mcts   # for AI
+python2 player.py human -g # for human player, add -g flag to enable gui
+python2 player.py mcts   # for AI, @NOTE AI does not have gui by now
 ```
 Or you can run two AIs and watch them to play.
+
+##### Note
+If you shut down one client, to make things work again, you have to shut down the server and the other client and then restart them.
 
 #### Message Conventions
 

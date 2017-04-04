@@ -20,6 +20,8 @@ def threaded(fn):
         return thread
     return wrapper
 
+players_name = ['Black', 'White']
+
 class Client(object):
     def __init__(self, player, addr=None, port=None, use_gui = False):
         self.player = player
@@ -38,7 +40,7 @@ class Client(object):
         self.socket = socket.create_connection((self.addr, self.port))
         self.running = True
 
-        # show gui
+        # @ST show gui
         if self.use_gui:
             show_gui_thread = self.player.show_gui()
 
@@ -91,8 +93,17 @@ class Client(object):
         self.player.update(state)
 
         print self.player.display(state, action)
+        if self.use_gui:
+            self.player.statusMutex.acquire()
+            self.player.status_text = '{0}\'s Turn'.format(players_name[data['state']['player'] - 1])
+            self.player.statusMutex.release()
+
         if data.get('winners') is not None:
             print self.player.winner_message(data['winners'])
+            if self.use_gui:
+                self.player.statusMutex.acquire()
+                self.player.status_text = self.player.winner_message(data['winners'])
+                self.player.statusMutex.release()
             self.running = False
         elif data['state']['player'] == self.player.player:
             action = self.player.get_action()
@@ -132,7 +143,11 @@ class HumanPlayer(object):
         self.board = board
         self.player = None
         self.history = []
+
+        # @NOTE multithreading
         self.stateMutex = threading.Lock()
+        self.status_text =''
+        self.statusMutex = threading.Lock()
 
 
     def update(self, state):
@@ -151,7 +166,7 @@ class HumanPlayer(object):
         clock = pygame.time.Clock()
         window     = widget.Window(1200, 800, 'Welcome to Reversi AI', 'resources/images/background_100x100.png')
         keyboard   = widget.Keyboard()
-        board_widget      = widget.Board(window, 2, [0], ['Black', 'White'], 8, 8, 1, ('resources/images/black_82x82.png',         \
+        board_widget      = widget.Board(window, 2, [0], players_name, 8, 8, 1, ('resources/images/black_82x82.png',         \
                           'resources/images/white_82x82.png', 'resources/images/board_82x82_b1.png'),                \
                           'resources/images/cursor_82x82.png')
         scoreboard = widget.ScoreBoard(window, 2, board_widget, ('resources/images/black_82x82.png',                               \
@@ -187,8 +202,10 @@ class HumanPlayer(object):
             score[1] = format(score[1])
             window.draw_background()
             board_widget.draw_self(pieces)
-            scoreboard.draw_self(score)
-            window.update()
+            self.statusMutex.acquire()
+            scoreboard.draw_self(score, self.status_text)
+            self.statusMutex.release()
+            window.update()  # @ST @NOTE You must call window.update() after you have drawn everything needed, or the screnn will flicker and flicker...
             clock.tick(FPS)
 
 

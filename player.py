@@ -1,6 +1,8 @@
 # reference:
 # https://github.com/jbradberry/boardgame-socketplayer
 # http://code.activestate.com/recipes/408859-socketrecv-three-ways-to-turn-it-into-recvall/
+# https://github.com/merryChris/reversi
+
 import json
 import socket
 import sys
@@ -13,14 +15,14 @@ import time
 import widget
 import pygame
 
-def threaded(fn):
+def threaded(fn):  # @ST to wrap a thread function
     def wrapper(*args, **kwargs):
         thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
         thread.start()
         return thread
     return wrapper
 
-players_name = ['Black', 'White']
+players_name = ['Black', 'White']  # @ST these names will be shown on GUI
 
 class Client(object):
     def __init__(self, player, addr=None, port=None, use_gui = False):
@@ -40,7 +42,7 @@ class Client(object):
         self.socket = socket.create_connection((self.addr, self.port))
         self.running = True
 
-        # @ST show gui
+        # @ST create the show gui thread
         if self.use_gui:
             show_gui_thread = self.player.show_gui()
 
@@ -53,7 +55,7 @@ class Client(object):
                     if data['type'] not in self.receiver:
                         raise ValueError(
                             "Unexpected message from server: {0!r}".format(message))
-                except ValueError:
+                except ValueError:  # @ST in case we receive two or more messages
                     size = struct.unpack('>i', message[:4])[0]
                     if size == len(message) - 2:
                         data = json.loads(message[4:])
@@ -94,16 +96,16 @@ class Client(object):
 
         print self.player.display(state, action)
         if self.use_gui:
-            self.player.statusMutex.acquire()
+            self.player.status_text_mutex.acquire()
             self.player.status_text = '{0}\'s Turn'.format(players_name[data['state']['player'] - 1])
-            self.player.statusMutex.release()
+            self.player.status_text_mutex.release()
 
         if data.get('winners') is not None:
             print self.player.winner_message(data['winners'])
             if self.use_gui:
-                self.player.statusMutex.acquire()
+                self.player.status_text_mutex.acquire()
                 self.player.status_text = self.player.winner_message(data['winners'])
-                self.player.statusMutex.release()
+                self.player.status_text_mutex.release()
             self.running = False
         elif data['state']['player'] == self.player.player:
             action = self.player.get_action()
@@ -144,16 +146,16 @@ class HumanPlayer(object):
         self.player = None
         self.history = []
 
-        # @NOTE multithreading
-        self.stateMutex = threading.Lock()
+        # @NOTE for multithreading
+        self.state_mutex = threading.Lock()
         self.status_text =''
-        self.statusMutex = threading.Lock()
+        self.status_text_mutex = threading.Lock()
 
 
     def update(self, state):
-        self.stateMutex.acquire()
+        self.state_mutex.acquire()
         self.history.append(self.board.pack_state(state))
-        self.stateMutex.release()
+        self.state_mutex.release()
 
     def display(self, state, action):
         state = self.board.pack_state(state)
@@ -178,16 +180,15 @@ class HumanPlayer(object):
                 window.quit()
                 return
 
-            #time.sleep(1/60)  # @ST update screen every 1 min
-            self.stateMutex.acquire()
+            self.state_mutex.acquire()  # @ST self.history is shared among threads, we need a lock here
             if len(self.history) > 0:
                 state = self.history[-1]
-                self.stateMutex.release()
+                self.state_mutex.release()
             else:
-                self.stateMutex.release()
+                self.state_mutex.release()
                 continue
-            pieces = [[-1]*self.board.cols for _ in range(self.board.rows)]
-            score = [0, 0]
+            pieces = [[-1]*self.board.cols for _ in range(self.board.rows)]  # @ST @NOTE we use -1 for empty, 0 for player 1 and 1 for player 2
+            score = [0, 0]  # @ST count pieces for two players
             p1_placed, p2_placed, previous, player = state
             for r in xrange(self.board.rows):
                 for c in xrange(self.board.cols):
@@ -202,9 +203,9 @@ class HumanPlayer(object):
             score[1] = format(score[1])
             window.draw_background()
             board_widget.draw_self(pieces)
-            self.statusMutex.acquire()
-            scoreboard.draw_self(score, self.status_text)
-            self.statusMutex.release()
+            self.status_text_mutex.acquire()  # @ST again, shared variable
+            scoreboard.draw_self(score, self.status_text) # @ST display info about who's turn or who's the winner,
+            self.status_text_mutex.release()
             window.update()  # @ST @NOTE You must call window.update() after you have drawn everything needed, or the screnn will flicker and flicker...
             clock.tick(FPS)
 
@@ -221,11 +222,11 @@ class HumanPlayer(object):
             if action is None:
                 continue
 
-            self.stateMutex.acquire()
+            self.state_mutex.acquire()
             if self.board.is_legal(self.history, action):
-                self.stateMutex.release()
+                self.state_mutex.release()
                 break
-            self.stateMutex.release()
+            self.state_mutex.release()
         return notation
 
 if __name__ == '__main__':
@@ -240,7 +241,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     board = reversi.Board
-    player_dict = {'human': HumanPlayer, 'mcts': ai.UCTWins}   #
+    player_dict = {'human': HumanPlayer, 'mcts': ai.UCTWins}   # @TODO we need to use our own AIs
     player_obj = player_dict[args.player]
     player_kwargs = dict(arg.split('=') for arg in args.extra or ())
 

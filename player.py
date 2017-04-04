@@ -5,7 +5,7 @@ import json
 import socket
 import sys
 import reversi
-import uct
+import ai
 import argparse
 import struct
 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     board = reversi.Board
-    player_dict = {'human': HumanPlayer, 'mcts': uct.UCTWins}   #
+    player_dict = {'human': HumanPlayer, 'mcts': ai.UCTWins}   #
     player_obj = player_dict[args.player]
     player_kwargs = dict(arg.split('=') for arg in args.extra or ())
 

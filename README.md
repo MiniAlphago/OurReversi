@@ -6,6 +6,7 @@
 
 #### How to run
 
+##### Run on localhost
 First, run the server
 ``` sh
 python2 server.py
@@ -13,11 +14,23 @@ python2 server.py
 
 Then, run two clients to play against each other
 ``` sh
-python2 player.py human -g # for human player, add -g flag to enable gui
+python2 player.py human -g  # for human player, add -g flag to enable gui
 python2 player.py mcts   # for AI, @NOTE AI does not have gui by now
 ```
 Or you can run two AIs and watch them to play.
 
+##### Remote server
+
+First, run the server
+``` sh
+python2 server.py 0.0.0.0 4242  # you should specify address and port number
+```
+
+Then, run two clients to play against each other
+``` sh
+python2 player.py human -g http://qcloud.stse.me 4242 # for human player, add -g flag to enable gui, you should specify address and port number
+python2 player.py mcts http://qcloud.stse.me 4242  # for AI, @NOTE AI does not have gui by now
+```
 ##### Note
 If you shut down one client, to make things work again, you have to shut down the server and the other client and then restart them.
 

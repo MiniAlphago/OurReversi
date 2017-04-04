@@ -10,7 +10,7 @@ import gevent, gevent.local, gevent.queue, gevent.server
 class Server(object):
     def __init__(self, board, addr=None, port=None):
         self.board = board
-        self.states = []
+        self.states = []  # @ST @NOTE it stores the whole history of the game, but actually we are only insterested in self.states[-1]
         self.local = gevent.local.local()
         self.server = None
         # player message queues
@@ -130,7 +130,7 @@ class Server(object):
             data['points'] = self.board.points_values(self.states)
 
         for x in xrange(1, self.board.num_players+1):
-            self.players[x].put(data)
+            self.players[x].put(data)  # @ST broadcast to all players
 
     def send(self, data):
         self.local.socket.sendall("{0}\r\n".format(json.dumps(data)))

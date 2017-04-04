@@ -85,7 +85,9 @@ class HumanPlayer(object):
 
     def get_action(self):
         while True:
-            notation = raw_input("Please enter your action: ")
+            print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
+            notation = raw_input()
+            #notation = raw_input("Please enter your action: ")
             action = self.board.pack_action(notation)
             if action is None:
                 continue

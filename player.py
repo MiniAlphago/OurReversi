@@ -25,6 +25,10 @@ class Client(object):
         self.running = True
         while self.running:
             message = self.socket.recv(4096)
+            print(message)  # @ST @BUG sometimes received incomplete message
+            print('\n\n')
+            print(len(message))
+            print('\n\n')
             messages = message.rstrip().split('\r\n')
             for message in messages:
                 data = json.loads(message)

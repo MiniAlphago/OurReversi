@@ -1,4 +1,6 @@
-# reference: https://github.com/jbradberry/reversi
+# reference:
+# https://github.com/jbradberry/reversi
+
 import re
 import string
 

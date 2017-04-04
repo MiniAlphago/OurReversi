@@ -133,7 +133,7 @@ class Server(object):
             self.players[x].put(data)  # @ST broadcast to all players
 
     def send(self, data):
-        print("{0}\r\n".format(json.dumps(data)))  # @ST @BUG
+        print("{0}\r\n".format(json.dumps(data)))  # @ST @BUG the message sent is correct, but clients sometimes receive incomplete message
         self.local.socket.sendall("{0}\r\n".format(json.dumps(data)))
 
 if __name__ == '__main__':

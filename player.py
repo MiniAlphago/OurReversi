@@ -8,10 +8,22 @@ import reversi
 import ai
 import argparse
 import struct
+import threading
+import time
+import widget
 
+stateMutex = threading.Lock()
+
+
+def threaded(fn):
+    def wrapper(*args, **kwargs):
+        thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
+        thread.start()
+        return thread
+    return wrapper
 
 class Client(object):
-    def __init__(self, player, addr=None, port=None):
+    def __init__(self, player, addr=None, port=None, use_gui = False):
         self.player = player
         self.running = False
         self.receiver = {'player': self.handle_player,
@@ -22,20 +34,38 @@ class Client(object):
 
         self.addr = addr if addr is not None else '127.0.0.1'
         self.port = port if port is not None else 4242
+        self.use_gui = use_gui
 
     def run(self):
         self.socket = socket.create_connection((self.addr, self.port))
         self.running = True
+
+        # show gui
+        if self.use_gui:
+            show_gui_thread = self.player.show_gui()
+
         while self.running:
             raw_message = self.recv(4096)
             messages = raw_message.rstrip().split('\r\n')
             for message in messages:
-                data = json.loads(message)
-                if data['type'] not in self.receiver:
-                    raise ValueError(
-                        "Unexpected message from server: {0!r}".format(message))
+                try:
+                    data = json.loads(message)
+                    if data['type'] not in self.receiver:
+                        raise ValueError(
+                            "Unexpected message from server: {0!r}".format(message))
+                except ValueError:
+                    continue
 
                 self.receiver[data['type']](data)
+        # @ST game over
+        try:
+            while True:
+                continue  # @ST do nothing, just waiting to exit
+        except KeyboardInterrupt:
+            pass
+        # join gui thread
+        if self.use_gui:
+            show_gui_thread.join()
 
     def handle_player(self, data):
         player = data['message']
@@ -83,7 +113,7 @@ class Client(object):
                     size = struct.unpack('>i', size_data[:4])[0]
                     recv_size = size
                     if recv_size > 524288:
-                        recv_size=524288
+                        recv_size = 524288
                     total_data.append(size_data[4:])
                 else:
                     size_data += sock_data
@@ -93,18 +123,67 @@ class Client(object):
         return ''.join(total_data)
 
 class HumanPlayer(object):
+
     def __init__(self, board):
         self.board = board
         self.player = None
         self.history = []
 
     def update(self, state):
+        stateMutex.acquire()
         self.history.append(self.board.pack_state(state))
+        stateMutex.release()
 
     def display(self, state, action):
         state = self.board.pack_state(state)
         action = self.board.pack_action(action)
         return self.board.display(state, action)
+
+    @threaded
+    def show_gui(self):
+        window     = widget.Window(1200, 800, 'Welcome to Reversi AI', 'resources/images/background_100x100.png')
+        keyboard   = widget.Keyboard()
+        board_widget      = widget.Board(window, 2, [0], ['Black', 'White'], 8, 8, 1, ('resources/images/black_82x82.png',         \
+                          'resources/images/white_82x82.png', 'resources/images/board_82x82_b1.png'),                \
+                          'resources/images/cursor_82x82.png')
+        scoreboard = widget.ScoreBoard(window, 2, board_widget, ('resources/images/black_82x82.png',                               \
+                                'resources/images/white_82x82.png', 'resources/images/background_100x100.png'))
+
+        while True:
+            # @ST if ESC is pressed, close window
+            if not keyboard.monitor():
+                window.quit()
+                return
+
+            time.sleep(1)  # @ST update screen every 1 min
+            #stateMutex.acquire()
+            if len(self.history) > 0:
+                state = self.history[-1]
+                #stateMutex.release()
+            else:
+                #stateMutex.release()
+                continue
+            pieces = [[-1]*self.board.cols for _ in range(self.board.rows)]
+            score = [0, 0]
+            p1_placed, p2_placed, previous, player = state
+            for r in xrange(self.board.rows):
+                for c in xrange(self.board.cols):
+                    index = 1 << (self.board.cols * r + c)
+                    if index & p1_placed:
+                        pieces[r][c] = 0
+                        score[0] += 1
+                    if index & p2_placed:
+                        pieces[r][c] = 1
+                        score[1] += 1
+            score[0] = format(score[0])
+            score[1] = format(score[1])
+            print('drawing background...')
+            window.draw_background()
+            print('drawing board...')
+            board_widget.draw_self(pieces)
+            print('drawing score board...')
+            scoreboard.draw_self(score)
+
 
     def winner_message(self, winners):
         return self.board.winner_message(winners)
@@ -117,13 +196,18 @@ class HumanPlayer(object):
             action = self.board.pack_action(notation)
             if action is None:
                 continue
+
+            stateMutex.acquire()
             if self.board.is_legal(self.history, action):
+                stateMutex.release()
                 break
+            stateMutex.release()
         return notation
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="Play a boardgame using a specified player type.")
+    parser.add_argument('-g', '--gui', action = 'store_true', dest = 'use_gui', default = False)
     parser.add_argument('player')
     parser.add_argument('address', nargs='?')
     parser.add_argument('port', nargs='?', type=int)
@@ -136,6 +220,7 @@ if __name__ == '__main__':
     player_obj = player_dict[args.player]
     player_kwargs = dict(arg.split('=') for arg in args.extra or ())
 
+    print(args.use_gui)
     client = Client(player_obj(board(), **player_kwargs),
-                           args.address, args.port)
+                           args.address, args.port, args.use_gui)
     client.run()

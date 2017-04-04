@@ -2,7 +2,6 @@
 import re
 import string
 
-
 class Board(object):
     num_players = 2
     rows = cols = 8
@@ -10,7 +9,7 @@ class Board(object):
     positions = {}
 
     str_pieces = {0: "   ", 1: " x ", 2: " o "}
-    unicode_pieces = {0: "   ", 1: u" \u25cf ", 2: u" \u25cb "}
+    unicode_pieces = {0: "   ", 1: u" \u25cb ", 2: u" \u25cf "}
 
     moveRE = re.compile(r'([a-h])([1-8])')  # @ST where to put a piece
 

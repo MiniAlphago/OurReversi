@@ -7,12 +7,14 @@ import random
 import sys
 import reversi
 import struct
+import argparse
+import thread
 
 import gevent, gevent.local, gevent.queue, gevent.server
 
 
 class Server(object):
-    def __init__(self, board, addr=None, port=None):
+    def __init__(self, board, addr=None, port=None, use_gui = False):
         self.board = board
         self.states = []  # @ST @NOTE it stores the whole history of the game, but actually we are only insterested in self.states[-1]
         self.local = gevent.local.local()
@@ -26,12 +28,18 @@ class Server(object):
         self.addr = addr if addr is not None else '127.0.0.1'
         self.port = port if port is not None else 4242
 
+        self.use_gui = use_gui
+
     def game_reset(self):
         while True:
             # initialize the game state
             del self.states[:]  # @ST so elegant
             state = self.board.starting_state()
             self.states.append(state)
+
+            # show gui
+            #if self.use_gui:
+            #    thread.start_new_thread(self.board.gui.run())  # @TODO it seems unnecessary to show gui in server
 
             # update all players with the starting state
             state = self.board.unpack_state(state)
@@ -164,13 +172,13 @@ class Server(object):
         return ''.join(total_data)
 
 if __name__ == '__main__':
-    args = sys.argv[:]
-    addr, port = None, None
+    parser = argparse.ArgumentParser(
+        description="A server for board game with/without gui")
+    parser.add_argument('-g', '--gui', action = 'store_true', dest = 'use_gui', default = False)
+    parser.add_argument('address', nargs='?')
+    parser.add_argument('port', nargs='?', type=int)
 
-    if len(args) > 1:
-        addr = args[1]
-    if len(args) > 2:
-        port = int(args[2])
+    args = parser.parse_args()
 
-    reversiServer = Server(reversi.Board(), addr, port)
+    reversiServer = Server(reversi.Board(), args.address, args.port, args.use_gui)
     reversiServer.run()

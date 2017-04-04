@@ -148,12 +148,13 @@ class Server(object):
         data_json = "{0}\r\n".format(json.dumps(data))
         self.local.socket.sendall(struct.pack('>i', len(data_json))+data_json)
 
-    def recv(self, socket, recv_size):
+    def recv(self, socket, expected_size):
         #data length is packed into 4 bytes
         total_len = 0
         total_data = []
         size=sys.maxint
         size_data = sock_data = ''
+        recv_size = expected_size
         while total_len < size:
             sock_data = socket.recv(recv_size)
             if not total_data:

@@ -1,10 +1,13 @@
-# reference: https://github.com/jbradberry/boardgame-socketplayer
+# reference:
+# https://github.com/jbradberry/boardgame-socketplayer
+# http://code.activestate.com/recipes/408859-socketrecv-three-ways-to-turn-it-into-recvall/
 import json
 import socket
 import sys
 import reversi
 import uct
 import argparse
+import struct
 
 
 class Client(object):
@@ -24,7 +27,7 @@ class Client(object):
         self.socket = socket.create_connection((self.addr, self.port))
         self.running = True
         while self.running:
-            message = self.socket.recv(4096)
+            message = self.recv(4096)
             print(message)  # @ST @BUG sometimes received incomplete message
             print('\n\n')
             print(len(message))
@@ -67,8 +70,31 @@ class Client(object):
             self.send({'type': 'action', 'message': action})
 
     def send(self, data):
-        self.socket.sendall("{0}\r\n".format(json.dumps(data)))
+        data_json = "{0}\r\n".format(json.dumps(data))
+        self.socket.sendall(struct.pack('>i', len(data_json))+data_json)
 
+    def recv(self, recv_size):
+        #data length is packed into 4 bytes
+        total_len = 0
+        total_data = []
+        size=sys.maxint
+        size_data = sock_data = ''
+        while total_len < size:
+            sock_data = self.socket.recv(recv_size)
+            if not total_data:
+                if len(sock_data) > 4:
+                    size_data += sock_data
+                    size = struct.unpack('>i', size_data[:4])[0]
+                    recv_size = size
+                    if recv_size > 524288:
+                        recv_size=524288
+                    total_data.append(size_data[4:])
+                else:
+                    size_data += sock_data
+            else:
+                total_data.append(sock_data)
+            total_len=sum([len(i) for i in total_data ])
+        return ''.join(total_data)
 
 class HumanPlayer(object):
     def __init__(self, board):

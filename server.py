@@ -1,8 +1,12 @@
-# reference: https://github.com/jbradberry/boardgame-socketserver
+# reference:
+# https://github.com/jbradberry/boardgame-socketserver
+# http://code.activestate.com/recipes/408859-socketrecv-three-ways-to-turn-it-into-recvall/
+
 import json
 import random
 import sys
 import reversi
+import struct
 
 import gevent, gevent.local, gevent.queue, gevent.server
 
@@ -81,7 +85,7 @@ class Server(object):
                     self.local.run = False
 
                 elif data.get('state', {}).get('player') == self.local.player:
-                    message = socket.recv(4096)
+                    message = self.recv(socket, 4096)
                     messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
                     self.parse(messages[0]) # FIXME: support for multiple messages
                                             #        or out-of-band requests
@@ -133,8 +137,33 @@ class Server(object):
             self.players[x].put(data)  # @ST broadcast to all players
 
     def send(self, data):
-        print("{0}\r\n".format(json.dumps(data)))  # @ST @BUG the message sent is correct, but clients sometimes receive incomplete message
-        self.local.socket.sendall("{0}\r\n".format(json.dumps(data)))
+        #print("{0}\r\n".format(json.dumps(data)))  # @ST @BUG the message sent is correct, but clients sometimes receive incomplete message
+        data_json = "{0}\r\n".format(json.dumps(data))
+        #self.local.socket.sendall("{0}\r\n".format(json.dumps(data)))
+        self.local.socket.sendall(struct.pack('>i', len(data_json))+data_json)
+
+    def recv(self, socket, recv_size):
+        #data length is packed into 4 bytes
+        total_len = 0
+        total_data = []
+        size=sys.maxint
+        size_data = sock_data = ''
+        while total_len < size:
+            sock_data = socket.recv(recv_size)
+            if not total_data:
+                if len(sock_data) > 4:
+                    size_data += sock_data
+                    size = struct.unpack('>i', size_data[:4])[0]
+                    recv_size = size
+                    if recv_size > 524288:
+                        recv_size=524288
+                    total_data.append(size_data[4:])
+                else:
+                    size_data += sock_data
+            else:
+                total_data.append(sock_data)
+            total_len=sum([len(i) for i in total_data ])
+        return ''.join(total_data)
 
 if __name__ == '__main__':
     args = sys.argv[:]

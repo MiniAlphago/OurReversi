@@ -186,7 +186,7 @@ Player 1's turn again.
 }
 ```
 
-Player 2's turn again.
+Player 2's turn again. Note that if someone wins, we will receive "winner" information
 ``` json
 {
     "state": {
@@ -229,6 +229,7 @@ Player 2's turn again.
             "row": 5
         }]
     },
+    "winners": {"1": 1, "2": 0},
     "type": "update",
     "board": null,
     "last_action": {

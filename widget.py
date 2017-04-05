@@ -1,3 +1,6 @@
+# reference:
+# https://github.com/merryChris/reversi
+
 import time, pygame
 
 class Window(object):

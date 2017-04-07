@@ -42,9 +42,22 @@ class Client(object):
         self.socket = socket.create_connection((self.addr, self.port))
         self.running = True
 
+        # @ST we need to determine who to put a piece first
+        print(u"Which player do you want to be, 1 {0} or 2 {1}?".format(self.player.board.unicode_pieces[1], self.player.board.unicode_pieces[2]))
+        player = raw_input()
+        print "You are player #{0}.".format(player)
+        self.player.player = int(player)
+        self.whoseTurn = 1  # player 1's turn
+
         # @ST create the show gui thread
         if self.use_gui:
             show_gui_thread = self.player.show_gui()
+
+        # @ST update the player with the starting state
+        state = self.player.board.starting_state()
+        state = self.player.board.unpack_state(state)
+        self.handle_update({'state': state})
+
 
         while self.running:
             raw_message = self.recv(4096)
@@ -112,7 +125,12 @@ class Client(object):
             self.send({'type': 'action', 'message': action})
 
     def send(self, data):
-        data_json = "{0}\r\n".format(json.dumps(data))
+        # @ST wrap message
+        cols = 'abcdefgh'
+        c, r = data['message']
+        wrapped_data = {'x': 'abcdefgh'.index(c) + 1, 'y': int(r)}
+        print(wrapped_data)
+        data_json = "{0}\r\n".format(json.dumps(wrapped_data))
         self.socket.sendall(struct.pack('>i', len(data_json))+data_json)
 
     def recv(self, expected_size):
@@ -137,7 +155,43 @@ class Client(object):
             else:
                 total_data.append(sock_data)
             total_len=sum([len(i) for i in total_data ])
-        return ''.join(total_data)
+
+            # @ST unwrapped message
+            message = ''.join(total_data)
+            messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
+            data = json.loads(messages[0])
+            c, r = int(data['x']), int(data['y'])
+            cols = 'abcdefgh'
+            if 'x' in data and 'y' in data:
+                message = {'message': cols[c - 1] + format(r), 'type': 'action'}
+                action = self.player.board.pack_action(message['message'])
+                state = self.player.history[-1]
+                state = self.player.board.unpack_state(state)
+                you = self.player.player
+                opponent = 3 - you
+                    print('ERROR: self.player.player is invalid')
+
+                unwrapped_message = {
+                    'type': 'update',
+                    'board': None,
+                    'state': state,
+                    'last_action': {
+                        'player': state['player'],
+                        'notation': None,  # @NOTE we might need to store the previous step in class player
+                        'sequence': len(self.player.history),
+                    },
+                }
+
+                if self.player.board.is_legal(self.player.history, action):   # @TODO bugs here
+                    unwrapped_message['state']['pieces'].append({'type': 'disc', 'player': opponent, 'row': r, 'column': c})
+                    unwrapped_message['player'] = you
+                    unwrapped_message['previous_player'] = opponent
+                else:
+                    print('A ha! Your oponent put an invalid piece at row {0}, column {1}'.format(r, c))
+
+                print(unwrapped_message)  # @BUG
+                unwrapped_message = "{0}\r\n".format(json.dumps(unwrapped_message))
+        return unwrapped_message
 
 class HumanPlayer(object):
 
@@ -213,7 +267,7 @@ class HumanPlayer(object):
     def winner_message(self, winners):
         return self.board.winner_message(winners)
 
-    def get_action(self):
+    def get_action(self):  # @BUG what about the case we can't move
         while True:
             print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
             notation = raw_input()

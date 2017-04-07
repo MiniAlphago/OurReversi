@@ -94,7 +94,7 @@ class Server(object):
                     self.parse(messages[0]) # FIXME: support for multiple messages
                                             #        or out-of-band requests
             except Exception as e:
-                print e
+                print e, 'blabla'
                 socket.close()
                 self.player_numbers.put_nowait(self.local.player)
                 self.players[self.local.player].put_nowait(data)
@@ -141,7 +141,13 @@ class Server(object):
             self.players[x].put(data)  # @ST broadcast to all players
 
     def send(self, data):
-        data_json = "{0}\r\n".format(json.dumps(data))
+        # @ST we need to wrap our communication protocol
+        if data['type'] != 'update' or data.get('last_action') is None:
+            return
+        c, r = self.board.pack_action(data['last_action']['notation'])
+        wrapped_data = {'x': c + 1, 'y': r + 1}
+        data_json = "{0}\r\n".format(json.dumps(wrapped_data))
+        print(data_json)  # @BUG
         self.local.socket.sendall(struct.pack('>i', len(data_json))+data_json)
 
     def recv(self, socket, expected_size):
@@ -166,7 +172,17 @@ class Server(object):
             else:
                 total_data.append(sock_data)
             total_len=sum([len(i) for i in total_data ])
-        return ''.join(total_data)
+
+            # @ST unwrapped message
+            message = ''.join(total_data)
+            #print(message)  # @BUG
+            messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
+            data = json.loads(messages[0])
+            cols = 'abcdefgh'
+            if 'x' in data and 'y' in data:
+                message = {'message': cols[int(data['x']) - 1] + format(data['y']), 'type': 'action'}
+                message = "{0}\r\n".format(json.dumps(message))
+        return message
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

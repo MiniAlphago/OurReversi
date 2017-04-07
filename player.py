@@ -168,13 +168,28 @@ class Client(object):
         # @ST unwrapped message
         action = (int(data['y']) - 1, int(data['x']) - 1)  # @ST [row, col]
         if action[0] < 0 or action[1] < 0:  # @ST your opponent did not put a piece
-            # @TODO it's our turn to put a piece again
+            # @ST it's our turn to put a piece again
+            
+            self.player.state_mutex.acquire()
+            state = self.player.history[-1]
+            tmp_player = state[3]
+            state[3] = state[2]
+            state[2] = tmp_player
+            self.player.history.append(state)
+            self.player.state_mutex.release()
+
+            self.handle_my_turn()
             return
 
         self.player.state_mutex.acquire()
         if not self.player.board.is_legal(self.player.history, action):  # @ST @NOTE here we assume that we do not preempt
-            print('A ha! Your oponent put an invalid piece at row {0}, column {1}'.format(r, c))
-            # @TODO maybe we have to wait again
+            # @ST maybe we have to wait again
+            invalid_msg = 'A ha! Your oponent put an invalid piece at row {0}, column {1}'.format(r, c)
+            print(invalid_msg)
+            if self.use_gui:
+                self.player.status_text_mutex.acquire()
+                self.player.status_text = invalid_msg
+                self.player.status_text_mutex.release()
             self.player.state_mutex.release()
             return
         self.player.state_mutex.release()
@@ -203,7 +218,17 @@ class Client(object):
     def handle_my_turn(self):
         action = self.player.get_action()
         self.send({'type': 'action', 'message': action})
-        # @TODO what if action = None
+
+        if action == None:  # @ST we just do nothing
+            self.player.state_mutex.acquire()
+            state = self.player.history[-1]
+            tmp_player = state[3]
+            state[3] = state[2]
+            state[2] = tmp_player
+            self.player.history.append(state)
+            self.player.state_mutex.release()
+            return
+
         action = self.player.board.pack_action(action)
         self.player.state_mutex.acquire()
         state = self.player.board.next_state(self.player.history[-1], action)

@@ -37,10 +37,6 @@ class Server(object):
             state = self.board.starting_state()
             self.states.append(state)
 
-            # show gui
-            #if self.use_gui:
-            #    thread.start_new_thread(self.board.gui.run())  # @TODO it seems unnecessary to show gui in server
-
             # update all players with the starting state
             state = self.board.unpack_state(state)
             # board = self.board.get_description()
@@ -52,7 +48,7 @@ class Server(object):
                 })
 
             # randomize the player selection
-            #players = range(1, self.board.num_players+1)
+            players = range(1, self.board.num_players+1)
             # random.shuffle(players)  # @ST we don't need to shuffle players
             for p in players:
                 self.player_numbers.put_nowait(p)

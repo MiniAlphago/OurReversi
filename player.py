@@ -137,6 +137,7 @@ class Client(object):
             c = c + 1
         wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
+        #print(data_json)  # @DEBUG
         self.socket.sendall(struct.pack('>i', len(data_json))+data_json)
 
     def recv(self, expected_size):
@@ -167,6 +168,7 @@ class Client(object):
     def handle_opponent_action(self, data):
         # @ST unwrapped message
         action = (int(data['y']) - 1, int(data['x']) - 1)  # @ST [row, col]
+        print(action)  # @DEBUG
         if action[0] < 0 or action[1] < 0:  # @ST your opponent did not put a piece
             # @ST it's our turn to put a piece again
 
@@ -212,10 +214,10 @@ class Client(object):
             return
 
         # OK, my turn
-        print(state[3], self.player.player, type(state[3]), type(self.player.player))
         if state[3] == self.player.player:
             self.handle_my_turn()
         else:
+            print(['*'] * 100)  # @DEBUG
             self.send({'type': 'action', 'message': None})
 
 

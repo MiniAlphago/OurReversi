@@ -80,13 +80,13 @@ class Client(object):
                 self.handle_opponent_action(data)
                 #self.receiver[data['type']](data)
         # @ST game over
-        try:
-            while True:
-                continue  # @ST do nothing, just waiting to exit
-        except KeyboardInterrupt:
-            pass
-        # join gui thread
         if self.use_gui:
+            try:
+                while True:
+                    continue  # @ST do nothing, just waiting to exit
+            except KeyboardInterrupt:
+                pass
+            # join gui thread
             show_gui_thread.join()
 
     def handle_player(self, data):
@@ -169,14 +169,12 @@ class Client(object):
         action = (int(data['y']) - 1, int(data['x']) - 1)  # @ST [row, col]
         if action[0] < 0 or action[1] < 0:  # @ST your opponent did not put a piece
             # @ST it's our turn to put a piece again
-            
-            self.player.state_mutex.acquire()
-            state = self.player.history[-1]
-            tmp_player = state[3]
-            state[3] = state[2]
-            state[2] = tmp_player
-            self.player.history.append(state)
-            self.player.state_mutex.release()
+
+            #self.player.state_mutex.acquire()
+            #state = self.player.history[-1]
+            #new_state = (state[0], state[1], state[3], state[2])
+            #self.player.history.append(new_state)
+            #self.player.state_mutex.release()
 
             self.handle_my_turn()
             return
@@ -196,14 +194,14 @@ class Client(object):
 
         self.player.state_mutex.acquire()
         state = self.player.board.next_state(self.player.history[-1], action)
-        self.player.state_mutex.release()
-        history_copy = self.player.history[:]
         self.player.update(self.player.board.unpack_state(state))  # @ST put a piece and flip
+        history_copy = self.player.history[:]
+        self.player.state_mutex.release()
         print self.player.display(self.player.board.unpack_state(state), self.player.board.unpack_action(action))
 
         if self.player.board.is_ended(history_copy):
 
-            win_msg = self.board.win_values(history_copy)
+            win_msg = self.player.board.winner_message(self.player.board.win_values(history_copy))
             print(win_msg)
 
             if self.use_gui:
@@ -211,35 +209,43 @@ class Client(object):
                 self.player.status_text = win_msg
                 self.player.status_text_mutex.release()
             self.running = False
+            return
 
         # OK, my turn
-        self.handle_my_turn()
+        print(state[3], self.player.player, type(state[3]), type(self.player.player))
+        if state[3] == self.player.player:
+            self.handle_my_turn()
+        else:
+            self.send({'type': 'action', 'message': None})
+
 
     def handle_my_turn(self):
         action = self.player.get_action()
-        self.send({'type': 'action', 'message': action})
+        message = {'type': 'action', 'message': action}
 
-        if action == None:  # @ST we just do nothing
-            self.player.state_mutex.acquire()
-            state = self.player.history[-1]
-            tmp_player = state[3]
-            state[3] = state[2]
-            state[2] = tmp_player
-            self.player.history.append(state)
-            self.player.state_mutex.release()
-            return
+        #print(action, action == None)
+        #if action == None:  # @ST we just do nothing
+        #    print(['*'] * 1000) # @DEBUG
+        #    self.player.state_mutex.acquire()
+        #    state = self.player.history[-1]
+        #    new_state = (state[0], state[1], state[3], state[2])
+        #    self.player.history.append(new_state)
+        #    self.player.state_mutex.release()
+        #    return
 
         action = self.player.board.pack_action(action)
         self.player.state_mutex.acquire()
         state = self.player.board.next_state(self.player.history[-1], action)
-        self.player.state_mutex.release()
-        history_copy = self.player.history[:]
         self.player.update(self.player.board.unpack_state(state))  # @ST put a piece and flip
+        history_copy = self.player.history[:]
+        self.player.state_mutex.release()
         print self.player.display(self.player.board.unpack_state(state), self.player.board.unpack_action(action))
+
+        self.send(message)
 
         if self.player.board.is_ended(history_copy):
 
-            win_msg = self.board.win_values(history_copy)
+            win_msg = self.player.board.winner_message(self.player.board.win_values(history_copy))
             print(win_msg)
 
             if self.use_gui:
@@ -247,6 +253,7 @@ class Client(object):
                 self.player.status_text = win_msg
                 self.player.status_text_mutex.release()
             self.running = False
+            return
 
 class HumanPlayer(object):
 

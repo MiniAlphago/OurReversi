@@ -137,17 +137,16 @@ class Server(object):
             data['winners'] = self.board.win_values(self.states)
             data['points'] = self.board.points_values(self.states)
 
-        for x in xrange(1, self.board.num_players+1):
-            self.players[x].put(data)  # @ST broadcast to all players
+        #for x in xrange(1, self.board.num_players+1):
+        self.players[3 - self.local.player].put(data)  # @ST send to opponent
 
     def send(self, data):
         # @ST we need to wrap our communication protocol
         if data['type'] != 'update' or data.get('last_action') is None:
             return
-        c, r = self.board.pack_action(data['last_action']['notation'])
+        r, c = self.board.pack_action(data['last_action']['notation'])
         wrapped_data = {'x': c + 1, 'y': r + 1}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
-        print(data_json)  # @BUG
         self.local.socket.sendall(struct.pack('>i', len(data_json))+data_json)
 
     def recv(self, socket, expected_size):
@@ -175,7 +174,6 @@ class Server(object):
 
             # @ST unwrapped message
             message = ''.join(total_data)
-            #print(message)  # @BUG
             messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
             data = json.loads(messages[0])
             cols = 'abcdefgh'

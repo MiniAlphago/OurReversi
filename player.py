@@ -46,8 +46,7 @@ class Client(object):
         print(u"Which player do you want to be, 1 {0} or 2 {1}?".format(self.player.board.unicode_pieces[1], self.player.board.unicode_pieces[2]))
         player = raw_input()
         print "You are player #{0}.".format(player)
-        self.player.player = int(player)
-        self.whoseTurn = 1  # player 1's turn
+        self.player.player = int(player)   # @ST 1 or 2
 
         # @ST create the show gui thread
         if self.use_gui:
@@ -58,6 +57,8 @@ class Client(object):
         state = self.player.board.unpack_state(state)
         self.handle_update({'state': state})
 
+        #if self.player.player == 1:
+        #    self.handle_my_turn()
 
         while self.running:
             raw_message = self.recv(4096)
@@ -65,9 +66,9 @@ class Client(object):
             for message in messages:
                 try:
                     data = json.loads(message)
-                    if data['type'] not in self.receiver:
-                        raise ValueError(
-                            "Unexpected message from server: {0!r}".format(message))
+                    #if data['type'] not in self.receiver:
+                    #    raise ValueError(
+                    #        "Unexpected message from server: {0!r}".format(message))
                 except ValueError:  # @ST in case we receive two or more messages
                     size = struct.unpack('>i', message[:4])[0]
                     if size == len(message) - 2:
@@ -76,7 +77,8 @@ class Client(object):
                             raise ValueError(
                                 "Unexpected message from server: {0!r}".format(message))
 
-                self.receiver[data['type']](data)
+                self.handle_opponent_action(data)
+                #self.receiver[data['type']](data)
         # @ST game over
         try:
             while True:
@@ -121,20 +123,19 @@ class Client(object):
                 self.player.status_text_mutex.release()
             self.running = False
         elif data['state']['player'] == self.player.player:
-            action = self.player.get_action()
-            self.send({'type': 'action', 'message': action})
-
-        if not self.player.board.legal_actions(self.player.history):
-            self.player.status_text = '{0} Cannot Move \n{1}\'s Turn Again'.format(players_name[data['state']['previous_player'] - 1], players_name[data['state']['player'] - 1])
-            handle_update()  # @TODO
-
+            self.handle_my_turn()
+            #action = self.player.get_action()
+            #self.send({'type': 'action', 'message': action})
 
     def send(self, data):
         # @ST wrap message
-        cols = 'abcdefgh'
-        c, r = data['message']
-        wrapped_data = {'x': 'abcdefgh'.index(c) + 1, 'y': int(r)}
-        print(wrapped_data)
+        if not data['message']:
+            r, c = -1, -1
+        else:
+            r, c = self.player.board.pack_action(data['message'])
+            r = r + 1
+            c = c + 1
+        wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
         self.socket.sendall(struct.pack('>i', len(data_json))+data_json)
 
@@ -161,42 +162,66 @@ class Client(object):
                 total_data.append(sock_data)
             total_len=sum([len(i) for i in total_data ])
 
-            # @ST unwrapped message
-            message = ''.join(total_data)
-            messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
-            data = json.loads(messages[0])
-            c, r = int(data['x']), int(data['y'])
-            cols = 'abcdefgh'
-            if 'x' in data and 'y' in data:
-                message = {'message': cols[c - 1] + format(r), 'type': 'action'}
-                action = self.player.board.pack_action(message['message'])
-                state = self.player.history[-1]
-                state = self.player.board.unpack_state(state)
-                you = self.player.player
-                opponent = 3 - you
-                    print('ERROR: self.player.player is invalid')
+        return ''.join(total_data)
 
-                unwrapped_message = {
-                    'type': 'update',
-                    'board': None,
-                    'state': state,
-                    'last_action': {
-                        'player': state['player'],
-                        'notation': None,  # @NOTE we might need to store the previous step in class player
-                        'sequence': len(self.player.history),
-                    },
-                }
+    def handle_opponent_action(self, data):
+        # @ST unwrapped message
+        action = (int(data['y']) - 1, int(data['x']) - 1)  # @ST [row, col]
+        if action[0] < 0 or action[1] < 0:  # @ST your opponent did not put a piece
+            # @TODO it's our turn to put a piece again
+            return
 
-                if self.player.board.is_legal(self.player.history, action):   # @TODO bugs here
-                    unwrapped_message['state']['pieces'].append({'type': 'disc', 'player': opponent, 'row': r, 'column': c})
-                    unwrapped_message['player'] = you
-                    unwrapped_message['previous_player'] = opponent
-                else:
-                    print('A ha! Your oponent put an invalid piece at row {0}, column {1}'.format(r, c))
+        self.player.state_mutex.acquire()
+        if not self.player.board.is_legal(self.player.history, action):  # @ST @NOTE here we assume that we do not preempt
+            print('A ha! Your oponent put an invalid piece at row {0}, column {1}'.format(r, c))
+            # @TODO maybe we have to wait again
+            self.player.state_mutex.release()
+            return
+        self.player.state_mutex.release()
 
-                print(unwrapped_message)  # @BUG
-                unwrapped_message = "{0}\r\n".format(json.dumps(unwrapped_message))
-        return unwrapped_message
+        self.player.state_mutex.acquire()
+        state = self.player.board.next_state(self.player.history[-1], action)
+        self.player.state_mutex.release()
+        history_copy = self.player.history[:]
+        self.player.update(self.player.board.unpack_state(state))  # @ST put a piece and flip
+        print self.player.display(self.player.board.unpack_state(state), self.player.board.unpack_action(action))
+
+        if self.player.board.is_ended(history_copy):
+
+            win_msg = self.board.win_values(history_copy)
+            print(win_msg)
+
+            if self.use_gui:
+                self.player.status_text_mutex.acquire()
+                self.player.status_text = win_msg
+                self.player.status_text_mutex.release()
+            self.running = False
+
+        # OK, my turn
+        self.handle_my_turn()
+
+    def handle_my_turn(self):
+        action = self.player.get_action()
+        self.send({'type': 'action', 'message': action})
+        # @TODO what if action = None
+        action = self.player.board.pack_action(action)
+        self.player.state_mutex.acquire()
+        state = self.player.board.next_state(self.player.history[-1], action)
+        self.player.state_mutex.release()
+        history_copy = self.player.history[:]
+        self.player.update(self.player.board.unpack_state(state))  # @ST put a piece and flip
+        print self.player.display(self.player.board.unpack_state(state), self.player.board.unpack_action(action))
+
+        if self.player.board.is_ended(history_copy):
+
+            win_msg = self.board.win_values(history_copy)
+            print(win_msg)
+
+            if self.use_gui:
+                self.player.status_text_mutex.acquire()
+                self.player.status_text = win_msg
+                self.player.status_text_mutex.release()
+            self.running = False
 
 class HumanPlayer(object):
 
@@ -272,11 +297,12 @@ class HumanPlayer(object):
     def winner_message(self, winners):
         return self.board.winner_message(winners)
 
-    def get_action(self):  # @BUG what about the case we can't move
+    def get_action(self):
+        if not self.board.legal_actions:  # @ST return early if there is no legal move
+            return
         while True:
             print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
             notation = raw_input()
-            #notation = raw_input("Please enter your action: ")
             action = self.board.pack_action(notation)
             if action is None:
                 continue

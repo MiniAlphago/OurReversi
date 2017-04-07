@@ -11,7 +11,7 @@ class Board(object):
     positions = {}
 
     str_pieces = {0: "   ", 1: " x ", 2: " o "}
-    unicode_pieces = {0: "   ", 1: u" \u25cb ", 2: u" \u25cf "}
+    unicode_pieces = {0: "   ", 1: u" \u25cf ", 2: u" \u25cb "}
 
     moveRE = re.compile(r'([a-h])([1-8])')  # @ST where to put a piece
 
@@ -27,8 +27,8 @@ class Board(object):
 
     def starting_state(self):
         # p1 placed, p2 placed, previous player, player to move
-        return (self.positions[(3,4)] + self.positions[(4,3)],
-                self.positions[(3,3)] + self.positions[(4,4)], 2, 1)
+        return (self.positions[(3,3)] + self.positions[(4,4)],
+                self.positions[(3,4)] + self.positions[(4,3)], 2, 1)
 
     def display(self, state, action, _unicode=True):
         # @TODO we need a GUI here

@@ -124,6 +124,11 @@ class Client(object):
             action = self.player.get_action()
             self.send({'type': 'action', 'message': action})
 
+        if not self.player.board.legal_actions(self.player.history):
+            self.player.status_text = '{0} Cannot Move \n{1}\'s Turn Again'.format(players_name[data['state']['previous_player'] - 1], players_name[data['state']['player'] - 1])
+            handle_update()  # @TODO
+
+
     def send(self, data):
         # @ST wrap message
         cols = 'abcdefgh'

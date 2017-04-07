@@ -52,7 +52,7 @@ class Server(object):
                 })
 
             # randomize the player selection
-            players = range(1, self.board.num_players+1)
+            #players = range(1, self.board.num_players+1)
             # random.shuffle(players)  # @ST we don't need to shuffle players
             for p in players:
                 self.player_numbers.put_nowait(p)

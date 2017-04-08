@@ -167,9 +167,9 @@ class Client(object):
 
     def handle_opponent_action(self, data):
         # @ST unwrapped message
-        print(data)  # @DEBUG
+        #print(data)  # @DEBUG
         action = (int(data['y']) - 1, int(data['x']) - 1)  # @ST [row, col]
-        print(action)  # @DEBUG
+        #print(action)  # @DEBUG
         if action[0] < 0 or action[1] < 0:  # @ST your opponent did not put a piece
             # @ST it's our turn to put a piece again
 
@@ -218,7 +218,7 @@ class Client(object):
         if state[3] == self.player.player:
             self.handle_my_turn()
         else:
-            print(['*'] * 100)  # @DEBUG
+            #print(['*'] * 100)  # @DEBUG
             self.send({'type': 'action', 'message': None})
 
 

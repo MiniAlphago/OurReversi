@@ -32,6 +32,7 @@ class Server(object):
 
         self.socket = []
         self.players_first = None  # @ST only self.player[1] and self.player[2] is used
+        self.two_players_connected = False
         #self.socket_cv = threading.Condition()
 
     def game_reset(self):
@@ -64,7 +65,7 @@ class Server(object):
         game = gevent.spawn(self.game_reset)
         self.server = gevent.server.StreamServer((self.addr, self.port),
                                                  self.connection)
-        print('Starting server, we are waiting two clients to connect')
+        print('Starting server, we are waiting two clients to connect...')
         self.server.serve_forever()
 
         # FIXME: need a way of nicely shutting down.
@@ -88,8 +89,9 @@ class Server(object):
             return
 
         self.local.run = True
-        #self.local.player = self.player_numbers.get()
+        self.local.player = None
         #self.send({'type': 'player', 'message': self.local.player})
+        print('A client is conneted')  # @DEBUG
 
         while self.local.run:
             #data = self.players[self.local.player].get()
@@ -100,21 +102,24 @@ class Server(object):
 
                 #elif data.get('state', {}).get('player') == self.local.player:
                 # print(self.local.player, type(self.local.player))
-                while len(self.socket) < 2:  # @ST we have to make sure that two clients connected before we received message
-                    pass
+                #while len(self.socket) < 2:  # @ST we have to make sure that two clients connected before we received message
+                #    pass
 
-                print('Game Started')
 
                 message = self.recv(socket, 4096)
                 messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
-                print(messages[0], self.local.player)  # @DEBUG
-                self.players[3 - self.local.player].put(messages[0])
 
                 if not self.players_first:
                     self.local.player = 1
+                    print('player {0} connected.'.format(self.local.player))  # @DEBUG
                     self.players_first = 1
                 elif not self.local.player:
                     self.local.player = 2
+                    self.two_players_connected = True
+                    print('player {0} connected.'.format(self.local.player))  # @DEBUG
+
+                print(messages[0], self.local.player)  # @DEBUG
+                self.players[3 - self.local.player].put(messages[0])
 
 
                 #self.socket_cv.acquire()  # @ST make sure that two clients connected
@@ -123,28 +128,12 @@ class Server(object):
                 #    self.socket_cv.wait()
                 #self.socket_cv.release()
 
-                self.send_opponent(self.players[3 - self.local.player].get(), self.socket[2 - self.local.player])
+                # @ST @FIXME I want to wait until two clients have connected to the server
+                #while not self.two_players_connected:
+                #    print('waiting for player 2')
+                #    continue
+                self.send_opponent(self.players[3 - self.local.player].get(), self.socket[2 - self.local.player])  # @TODO we have to wait until two clients are connected
 
-
-            #     if self.local.player == 1:
-            #         message = self.recv(socket, 4096)
-            #         messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
-            #         print(messages[0])  # @DEBUG
-            #         self.players[3 - self.local.player].put(messages[0])
-            #
-            #         data = self.players[self.local.player].get()
-            #         self.send(data)
-            #
-            #     else:
-            #         data = self.players[self.local.player].get()
-            #         self.send(data)
-            #         print(data)  # @DEBUG
-            #
-            #         message = self.recv(socket, 4096)
-            #         messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
-            #         self.players[3 - self.local.player].put(messages[0])
-            #         #self.parse(messages[0]) # FIXME: support for multiple messages
-            #                                 #        or out-of-band requests
             except Exception as e:
                 print e, 'blabla'
                 socket.close()

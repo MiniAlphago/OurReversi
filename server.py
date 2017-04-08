@@ -8,7 +8,7 @@ import sys
 import reversi
 import struct
 import argparse
-import thread
+import threading
 
 import gevent, gevent.local, gevent.queue, gevent.server
 
@@ -30,6 +30,10 @@ class Server(object):
 
         self.use_gui = use_gui
 
+        self.socket = []
+        self.players_first = None  # @ST only self.player[1] and self.player[2] is used
+        #self.socket_cv = threading.Condition()
+
     def game_reset(self):
         while True:
             # initialize the game state
@@ -40,12 +44,12 @@ class Server(object):
             # update all players with the starting state
             state = self.board.unpack_state(state)
             # board = self.board.get_description()
-            for x in xrange(1, self.board.num_players+1):
-                self.players[x].put_nowait({
-                    'type': 'update',
-                    'board': None,  # board,
-                    'state': state,
-                })
+            #for x in xrange(1, self.board.num_players+1):
+            #    self.players[x].put_nowait({
+            #        'type': 'update',
+            #        'board': None,  # board,
+            #        'state': state,
+            #    })
 
             # randomize the player selection
             players = range(1, self.board.num_players+1)
@@ -60,7 +64,7 @@ class Server(object):
         game = gevent.spawn(self.game_reset)
         self.server = gevent.server.StreamServer((self.addr, self.port),
                                                  self.connection)
-        print "Starting server..."
+        print('Starting server, we are waiting two clients to connect')
         self.server.serve_forever()
 
         # FIXME: need a way of nicely shutting down.
@@ -69,6 +73,12 @@ class Server(object):
 
     def connection(self, socket, address):
         print "connection:", socket
+        #self.socket_cv.acquire()
+        self.socket.append(socket)
+        #if len(self.socket) == 2:  # @ST we have two players now
+        #    self.socket_cv.notify()
+        #    print('notified')  # @DEBUG
+        #self.socket_cv.release()
         self.local.socket = socket
         if self.player_numbers.empty():
             self.send({
@@ -78,26 +88,68 @@ class Server(object):
             return
 
         self.local.run = True
-        self.local.player = self.player_numbers.get()
-        self.send({'type': 'player', 'message': self.local.player})
+        #self.local.player = self.player_numbers.get()
+        #self.send({'type': 'player', 'message': self.local.player})
 
         while self.local.run:
-            data = self.players[self.local.player].get()
+            #data = self.players[self.local.player].get()
             try:
-                self.send(data)
-                if data.get('winners') is not None:
-                    self.local.run = False
+                #self.send(data)
+                #if data.get('winners') is not None:
+                #    self.local.run = False
 
-                elif data.get('state', {}).get('player') == self.local.player:
-                    message = self.recv(socket, 4096)
-                    messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
-                    self.parse(messages[0]) # FIXME: support for multiple messages
-                                            #        or out-of-band requests
+                #elif data.get('state', {}).get('player') == self.local.player:
+                # print(self.local.player, type(self.local.player))
+                while len(self.socket) < 2:  # @ST we have to make sure that two clients connected before we received message
+                    pass
+
+                print('Game Started')
+
+                message = self.recv(socket, 4096)
+                messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
+                print(messages[0], self.local.player)  # @DEBUG
+                self.players[3 - self.local.player].put(messages[0])
+
+                if not self.players_first:
+                    self.local.player = 1
+                    self.players_first = 1
+                elif not self.local.player:
+                    self.local.player = 2
+
+
+                #self.socket_cv.acquire()  # @ST make sure that two clients connected
+                #while len(self.socket) < 2:
+                #    print('waiting')  # @DEBUG
+                #    self.socket_cv.wait()
+                #self.socket_cv.release()
+
+                self.send_opponent(self.players[3 - self.local.player].get(), self.socket[2 - self.local.player])
+
+
+            #     if self.local.player == 1:
+            #         message = self.recv(socket, 4096)
+            #         messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
+            #         print(messages[0])  # @DEBUG
+            #         self.players[3 - self.local.player].put(messages[0])
+            #
+            #         data = self.players[self.local.player].get()
+            #         self.send(data)
+            #
+            #     else:
+            #         data = self.players[self.local.player].get()
+            #         self.send(data)
+            #         print(data)  # @DEBUG
+            #
+            #         message = self.recv(socket, 4096)
+            #         messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
+            #         self.players[3 - self.local.player].put(messages[0])
+            #         #self.parse(messages[0]) # FIXME: support for multiple messages
+            #                                 #        or out-of-band requests
             except Exception as e:
                 print e, 'blabla'
                 socket.close()
                 self.player_numbers.put_nowait(self.local.player)
-                self.players[self.local.player].put_nowait(data)
+                #self.players[self.local.player].put_nowait(data)
                 self.local.run = False
         self.player_numbers.task_done()
 
@@ -140,14 +192,31 @@ class Server(object):
         #for x in xrange(1, self.board.num_players+1):
         self.players[3 - self.local.player].put(data)  # @ST send to opponent
 
+    def send_opponent(self, data, socket):
+        # @ST we need to wrap our communication protocol
+        #if data['type'] != 'update' or data.get('last_action') is None:
+        #    return
+        #r, c = self.board.pack_action(data['last_action']['notation'])
+        #wrapped_data = {'x': c + 1, 'y': r + 1}
+        #data_json = "{0}\r\n".format(json.dumps(wrapped_data))
+        data = json.loads(data)
+        if not data.get('x') or not data.get('y'):
+            return
+        data_json = "{0}\r\n".format(json.dumps(data))
+        socket.sendall(struct.pack('>i', len(data_json))+data_json)
+
     def send(self, data):
         # @ST we need to wrap our communication protocol
-        if data['type'] != 'update' or data.get('last_action') is None:
+        #if data['type'] != 'update' or data.get('last_action') is None:
+        #    return
+        #r, c = self.board.pack_action(data['last_action']['notation'])
+        #wrapped_data = {'x': c + 1, 'y': r + 1}
+        #data_json = "{0}\r\n".format(json.dumps(wrapped_data))
+        if not data.get('x') or not data.get('y'):
             return
-        r, c = self.board.pack_action(data['last_action']['notation'])
-        wrapped_data = {'x': c + 1, 'y': r + 1}
-        data_json = "{0}\r\n".format(json.dumps(wrapped_data))
-        self.local.socket.sendall(struct.pack('>i', len(data_json))+data_json)
+        data_json = "{0}\r\n".format(json.dumps(data))
+        socket.sendall(struct.pack('>i', len(data_json))+data_json)
+
 
     def recv(self, socket, expected_size):
         #data length is packed into 4 bytes
@@ -172,14 +241,14 @@ class Server(object):
                 total_data.append(sock_data)
             total_len=sum([len(i) for i in total_data ])
 
-            # @ST unwrapped message
             message = ''.join(total_data)
-            messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
-            data = json.loads(messages[0])
-            cols = 'abcdefgh'
-            if 'x' in data and 'y' in data:
-                message = {'message': cols[int(data['x']) - 1] + format(data['y']), 'type': 'action'}
-                message = "{0}\r\n".format(json.dumps(message))
+            # @ST unwrapped message
+            #messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
+            #data = json.loads(messages[0])
+            #cols = 'abcdefgh'
+            #if 'x' in data and 'y' in data:
+            #    message = {'message': cols[int(data['x']) - 1] + format(data['y']), 'type': 'action'}
+            #    message = "{0}\r\n".format(json.dumps(message))
         return message
 
 if __name__ == '__main__':

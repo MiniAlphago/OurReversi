@@ -153,6 +153,7 @@ class UCTWins(UCT):
 
     def calculate_action_values(self, state, player, legal):
         actions_states = ((p, self.board.next_state(state, p)) for p in legal)
+        print(actions_states)  # @DEBUG
         return sorted(
             ({'action': p,
               'percent': 100 * self.stats[(player, S)].value / self.stats[(player, S)].visits,

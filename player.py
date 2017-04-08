@@ -167,6 +167,7 @@ class Client(object):
 
     def handle_opponent_action(self, data):
         # @ST unwrapped message
+        print(data)  # @DEBUG
         action = (int(data['y']) - 1, int(data['x']) - 1)  # @ST [row, col]
         print(action)  # @DEBUG
         if action[0] < 0 or action[1] < 0:  # @ST your opponent did not put a piece
@@ -184,7 +185,7 @@ class Client(object):
         self.player.state_mutex.acquire()
         if not self.player.board.is_legal(self.player.history, action):  # @ST @NOTE here we assume that we do not preempt
             # @ST maybe we have to wait again
-            invalid_msg = 'A ha! Your oponent put an invalid piece at row {0}, column {1}'.format(r, c)
+            invalid_msg = 'A ha! Your oponent put an invalid piece at row {0}, column {1}'.format(action[0] + 1, action[1] + 1)
             print(invalid_msg)
             if self.use_gui:
                 self.player.status_text_mutex.acquire()

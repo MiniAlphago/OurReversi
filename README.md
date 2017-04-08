@@ -27,7 +27,7 @@ python2 player.py mcts   # for AI, @NOTE AI does not have gui by now
 ```
 Or you can run two AIs and watch them to play.
 
-### Run the Server Program on a Remote Server
+### Or Run the Server Program on a Remote Server
 
 First, run the server
 ``` sh

@@ -74,12 +74,7 @@ class Server(object):
 
     def connection(self, socket, address):
         print "connection:", socket
-        #self.socket_cv.acquire()
         self.socket.append(socket)
-        #if len(self.socket) == 2:  # @ST we have two players now
-        #    self.socket_cv.notify()
-        #    print('notified')  # @DEBUG
-        #self.socket_cv.release()
         self.local.socket = socket
         if self.player_numbers.empty():
             self.send({
@@ -120,13 +115,6 @@ class Server(object):
 
                 print(messages[0], self.local.player)  # @DEBUG
                 self.players[3 - self.local.player].put(messages[0])
-
-
-                #self.socket_cv.acquire()  # @ST make sure that two clients connected
-                #while len(self.socket) < 2:
-                #    print('waiting')  # @DEBUG
-                #    self.socket_cv.wait()
-                #self.socket_cv.release()
 
                 # @ST @FIXME I want to wait until two clients have connected to the server
                 #while not self.two_players_connected:
@@ -182,12 +170,6 @@ class Server(object):
         self.players[3 - self.local.player].put(data)  # @ST send to opponent
 
     def send_opponent(self, data, socket):
-        # @ST we need to wrap our communication protocol
-        #if data['type'] != 'update' or data.get('last_action') is None:
-        #    return
-        #r, c = self.board.pack_action(data['last_action']['notation'])
-        #wrapped_data = {'x': c + 1, 'y': r + 1}
-        #data_json = "{0}\r\n".format(json.dumps(wrapped_data))
         data = json.loads(data)
         if not data.get('x') or not data.get('y'):
             return

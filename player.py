@@ -282,9 +282,7 @@ class HumanPlayer(object):
 
 
     def update(self, state):
-        self.state_mutex.acquire()
         self.history.append(self.board.pack_state(state))
-        self.state_mutex.release()
 
     def display(self, state, action):
         state = self.board.pack_state(state)
@@ -367,8 +365,12 @@ class HumanPlayer(object):
         return self.board.winner_message(winners)
 
     def get_action(self):
-        if not self.board.legal_actions:  # @ST return early if there is no legal move
+        self.state_mutex.acquire()
+        if not self.board.legal_actions(self.history):  # @ST return early if there is no legal move
+            self.state_mutex.release()
             return
+        self.state_mutex.release()
+
         while True:
             if self.use_gui:
                 self.condition.acquire()

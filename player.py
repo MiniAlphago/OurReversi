@@ -37,6 +37,7 @@ class Client(object):
         self.addr = addr if addr is not None else '127.0.0.1'
         self.port = port if port is not None else 4242
         self.use_gui = use_gui
+        self.player.use_gui = use_gui  # @ST we need use_gui in get_action()
 
 
     def run(self):
@@ -224,7 +225,6 @@ class Client(object):
 
 
     def handle_my_turn(self):
-        # @TODO give me a signal that I can put a piece: position, signal
         action = self.player.get_action()
         message = {'type': 'action', 'message': action}
 
@@ -370,22 +370,27 @@ class HumanPlayer(object):
         if not self.board.legal_actions:  # @ST return early if there is no legal move
             return
         while True:
-            self.condition.acquire()
-            if not self.coordinate:
-                #print ("go to sleep ...")  # @DEBUG
-                self.condition.wait()
-            #print ("waken up...", self.coordinate)  # @DEBUG
-            pressed_coordinate = self.coordinate
-            self.condition.release()
+            if self.use_gui:
+                self.condition.acquire()
+                if not self.coordinate:
+                    #print ("go to sleep ...")  # @DEBUG
+                    self.condition.wait()
+                #print ("waken up...", self.coordinate)  # @DEBUG
+                pressed_coordinate = self.coordinate
+                self.condition.release()
 
-            self.gui_is_on_mutex.acquire()
-            if self.gui_is_on:
-                notation = str(chr(pressed_coordinate[1]+97))+str(pressed_coordinate[0]+1)
-                self.coordinate = None
-            else:  # @ST unfortunately the gui is closed by user
+                self.gui_is_on_mutex.acquire()
+                if self.gui_is_on:
+                    notation = str(chr(pressed_coordinate[1]+97))+str(pressed_coordinate[0]+1)
+                    self.coordinate = None
+                else:  # @ST unfortunately the gui is closed by user
+                    print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
+                    notation = raw_input()
+                self.gui_is_on_mutex.release()
+
+            else:
                 print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
                 notation = raw_input()
-            self.gui_is_on_mutex.release()
 
             action = self.board.pack_action(notation)
             if action is None:

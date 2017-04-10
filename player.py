@@ -186,10 +186,11 @@ class HumanPlayer(object):
                 return
 
             self.condition.acquire()
+            location = board_widget.get_location()
+            if location is not None:
 
-            if board_widget.get_location() is not None:
-
-                self.coordinate = board_widget.get_location()
+                self.coordinate = location
+                print 'show_gui set self.coordinate as: ', self.coordinate
                 #print self.coordinate
                 #self.condition.wait()
                 self.condition.notify()
@@ -243,12 +244,15 @@ class HumanPlayer(object):
             #notation = raw_input()
             self.condition.acquire()
             if not self.coordinate:
+                print ("go to sleep ...")
                 self.condition.wait()
               #  notation = (5,4)
             #notation = raw_input("Please enter your action: ")
                 #self.condition.notify()
             self.condition.release()
-            notation = str(chr(self.coordinate[0]+96))+str(self.coordinate[1])
+            print ("waken up...", self.coordinate)
+            notation = str(chr(self.coordinate[1]+97))+str(self.coordinate[0]+1)
+            print notation
             self.coordinate = None
             #time.sleep(4)
 

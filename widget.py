@@ -2,7 +2,7 @@
 # https://github.com/merryChris/reversi
 
 import time, pygame
-#from rule import Reversi 
+#from rule import Reversi
 
 class Window(object):
 
@@ -110,11 +110,12 @@ class Board(object):
         self.locked = False
 
     def get_location(self):
-        if self.pressed and  self.cursor:
+        if self.pressed and self.cursor:
             self.pressed = False
-
+            print 'get_location returned: ', self.cursor
             return self.cursor
-        
+        return None
+
 
     def get_player_status_text(self):
         formated_status_text = ['{who}\'s Turn', 'Flipping After {who}\'s Turn', '{who} Cannot Move',        \

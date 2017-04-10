@@ -190,13 +190,14 @@ class HumanPlayer(object):
             if board_widget.get_location() is not None:
 
                 self.coordinate = board_widget.get_location()
-                print self.coordinate
-                self.condition.wait()
-            else:
-                print self.coordinate
+                #print self.coordinate
+                #self.condition.wait()
                 self.condition.notify()
+            #else:
+                #print self.coordinate
+                #self.condition.notify()
             self.condition.release()
-            time.sleep(1)
+            #time.sleep(1)
 
             self.state_mutex.acquire()  # @ST self.history is shared among threads, we need a lock here
             if len(self.history) > 0:
@@ -241,15 +242,15 @@ class HumanPlayer(object):
             print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
             #notation = raw_input()
             self.condition.acquire()
-            if self.coordinate:
-                notation = str(chr(self.coordinate[0]+96))+str(self.coordinate[1])
-              #  notation = (5,4) 
-            #notation = raw_input("Please enter your action: ")
-                self.condition.notify()
-            else:
+            if not self.coordinate:
                 self.condition.wait()
+              #  notation = (5,4)
+            #notation = raw_input("Please enter your action: ")
+                #self.condition.notify()
             self.condition.release()
-            time.sleep(4)
+            notation = str(chr(self.coordinate[0]+96))+str(self.coordinate[1])
+            self.coordinate = None
+            #time.sleep(4)
 
             action = self.board.pack_action(notation)
             if action is None:

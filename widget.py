@@ -2,6 +2,7 @@
 # https://github.com/merryChris/reversi
 
 import time, pygame
+#from rule import Reversi
 
 class Window(object):
 
@@ -100,11 +101,21 @@ class Board(object):
         self.anchor = (self.window.height/10, self.window.width/10)
         self.cursor = (3, 3)
 
+       # self.rule = Reversi(self.player_number, height, width)
+
     def is_locked(self):
         return self.locked
 
     def reset_lock(self):
         self.locked = False
+
+    def get_location(self):
+        if self.pressed and self.cursor:
+            self.pressed = False
+            print 'get_location returned: ', self.cursor
+            return self.cursor
+        return None
+
 
     def get_player_status_text(self):
         formated_status_text = ['{who}\'s Turn', 'Flipping After {who}\'s Turn', '{who} Cannot Move',        \
@@ -131,7 +142,7 @@ class Board(object):
             self.rule.shift(self.cursor)
             self.placed = False
             self.window.reset_background()
-        # Need AI Case
+        # Need  Case
         elif self.rule.get_current_player() not in self.entity_player_list:
             self.cursor = self.ai.get_play()
             self.rule.place(self.cursor)
@@ -158,7 +169,8 @@ class Board(object):
         nxt_cursor = tuple([self.cursor[0]+Board.MOVE[d][0], self.cursor[1]+Board.MOVE[d][1]])
         if 0 <= nxt_cursor[0] < self.height and 0 <= nxt_cursor[1] < self.width:
             self.cursor = nxt_cursor
-            self.flutter_update()
+         #   self.flutter_update()
+            self.window.draw_surface(self.anchor, (self.block_size[0]*self.cursor[0], self.block_size[1]*self.cursor[1]), self.cp)
         if d != 0: return
 
         if keys[pygame.K_KP_ENTER] or keys[pygame.K_RETURN]:
@@ -171,7 +183,7 @@ class Board(object):
         self.window.draw_grid(self.anchor, self.block_size, state, self.pieces)
 
         # @ST @NOTE if you want to draw the cursor, uncomment the function call below
-        #self.window.draw_surface(self.anchor, (self.block_size[0]*self.cursor[0], self.block_size[1]*self.cursor[1]), self.cp)
+        self.window.draw_surface(self.anchor, (self.block_size[0]*self.cursor[0], self.block_size[1]*self.cursor[1]), self.cp)
 
 
 class ScoreBoard(object):

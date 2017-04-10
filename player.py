@@ -38,6 +38,7 @@ class Client(object):
         self.port = port if port is not None else 4242
         self.use_gui = use_gui
 
+
     def run(self):
         self.socket = socket.create_connection((self.addr, self.port))
         self.running = True
@@ -265,11 +266,19 @@ class HumanPlayer(object):
         self.board = board
         self.player = None
         self.history = []
+        self.coordinate = None
+
 
         # @NOTE for multithreading
         self.state_mutex = threading.Lock()
         self.status_text =''
         self.status_text_mutex = threading.Lock()
+
+        #@CH condition variable
+        self.condition = threading.Condition()
+
+        self.gui_is_on = False
+        self.gui_is_on_mutex = threading.Lock()
 
 
     def update(self, state):
@@ -288,17 +297,36 @@ class HumanPlayer(object):
         clock = pygame.time.Clock()
         window     = widget.Window(1200, 800, 'Welcome to Reversi AI', 'resources/images/background_100x100.png')
         keyboard   = widget.Keyboard()
-        board_widget      = widget.Board(window, 2, [0], players_name, 8, 8, 1, ('resources/images/white_82x82.png',         \
+        board_widget = widget.Board(window, 2, [0], players_name, 8, 8, 1, ('resources/images/white_82x82.png',         \
                           'resources/images/black_82x82.png', 'resources/images/board_82x82_b1.png'),                \
                           'resources/images/cursor_82x82.png')
         scoreboard = widget.ScoreBoard(window, 2, board_widget, ('resources/images/white_82x82.png',                               \
                                 'resources/images/black_82x82.png', 'resources/images/background_100x100.png'))
 
+        self.gui_is_on_mutex.acquire()
+        self.gui_is_on = True
+        self.gui_is_on_mutex.release()
+
         while True:
-            # @ST if ESC is pressed, close window
-            if not keyboard.monitor():
+            if not keyboard.monitor(onkeydown_callback=board_widget.update):
+                self.gui_is_on_mutex.acquire()
+                self.gui_is_on = False
+                self.gui_is_on_mutex.release()
+
+                self.condition.acquire()
+                self.condition.notify()  # gui is off
+                self.condition.release()
                 window.quit()
                 return
+
+            self.condition.acquire()
+            location = board_widget.get_location()
+            if location is not None:
+
+                self.coordinate = location
+                #print 'show_gui set self.coordinate as: ', self.coordinate  # @DEBUG
+                self.condition.notify()
+            self.condition.release()
 
             self.state_mutex.acquire()  # @ST self.history is shared among threads, we need a lock here
             if len(self.history) > 0:
@@ -329,6 +357,11 @@ class HumanPlayer(object):
             window.update()  # @ST @NOTE You must call window.update() after you have drawn everything needed, or the screnn will flicker and flicker...
             clock.tick(FPS)
 
+        while True:
+            # @ST if ESC is pressed, close window
+            if not keyboard.monitor():
+                window.quit()
+                return
 
     def winner_message(self, winners):
         return self.board.winner_message(winners)
@@ -337,8 +370,23 @@ class HumanPlayer(object):
         if not self.board.legal_actions:  # @ST return early if there is no legal move
             return
         while True:
-            print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
-            notation = raw_input()
+            self.condition.acquire()
+            if not self.coordinate:
+                #print ("go to sleep ...")  # @DEBUG
+                self.condition.wait()
+            #print ("waken up...", self.coordinate)  # @DEBUG
+            pressed_coordinate = self.coordinate
+            self.condition.release()
+
+            self.gui_is_on_mutex.acquire()
+            if self.gui_is_on:
+                notation = str(chr(pressed_coordinate[1]+97))+str(pressed_coordinate[0]+1)
+                self.coordinate = None
+            else:  # @ST unfortunately the gui is closed by user
+                print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
+                notation = raw_input()
+            self.gui_is_on_mutex.release()
+
             action = self.board.pack_action(notation)
             if action is None:
                 continue

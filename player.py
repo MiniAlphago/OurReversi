@@ -38,6 +38,7 @@ class Client(object):
         self.port = port if port is not None else 4242
         self.use_gui = use_gui
 
+
     def run(self):
         self.socket = socket.create_connection((self.addr, self.port))
         self.running = True
@@ -156,6 +157,8 @@ class HumanPlayer(object):
         #@CH condition variable
         self.condition = threading.Condition()
 
+        self.gui_is_on = False
+        self.gui_is_on_mutex = threading.Lock()
 
 
     def update(self, state):
@@ -180,8 +183,19 @@ class HumanPlayer(object):
         scoreboard = widget.ScoreBoard(window, 2, board_widget, ('resources/images/black_82x82.png',                               \
                                 'resources/images/white_82x82.png', 'resources/images/background_100x100.png'))
 
+        self.gui_is_on_mutex.acquire()
+        self.gui_is_on = True
+        self.gui_is_on_mutex.release()
+
         while True:
             if not keyboard.monitor(onkeydown_callback=board_widget.update):
+                self.gui_is_on_mutex.acquire()
+                self.gui_is_on = False
+                self.gui_is_on_mutex.release()
+
+                self.condition.acquire()
+                self.condition.notify()  # gui is off
+                self.condition.release()
                 window.quit()
                 return
 
@@ -234,16 +248,23 @@ class HumanPlayer(object):
 
     def get_action(self):
         while True:
-            print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
-            #notation = raw_input()
             self.condition.acquire()
             if not self.coordinate:
                 #print ("go to sleep ...")  # @DEBUG
                 self.condition.wait()
             #print ("waken up...", self.coordinate)  # @DEBUG
-            notation = str(chr(self.coordinate[1]+97))+str(self.coordinate[0]+1)
-            self.coordinate = None
+            pressed_coordinate = self.coordinate
             self.condition.release()
+
+            self.gui_is_on_mutex.acquire()
+            if self.gui_is_on:
+                notation = str(chr(pressed_coordinate[1]+97))+str(pressed_coordinate[0]+1)
+                self.coordinate = None
+            else:  # @ST unfortunately the gui is closed by user
+                print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
+                notation = raw_input()
+            self.gui_is_on_mutex.release()
+
 
             action = self.board.pack_action(notation)
             if action is None:

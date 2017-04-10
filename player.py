@@ -190,15 +190,9 @@ class HumanPlayer(object):
             if location is not None:
 
                 self.coordinate = location
-                print 'show_gui set self.coordinate as: ', self.coordinate
-                #print self.coordinate
-                #self.condition.wait()
+                #print 'show_gui set self.coordinate as: ', self.coordinate  # @DEBUG
                 self.condition.notify()
-            #else:
-                #print self.coordinate
-                #self.condition.notify()
             self.condition.release()
-            #time.sleep(1)
 
             self.state_mutex.acquire()  # @ST self.history is shared among threads, we need a lock here
             if len(self.history) > 0:
@@ -244,17 +238,12 @@ class HumanPlayer(object):
             #notation = raw_input()
             self.condition.acquire()
             if not self.coordinate:
-                print ("go to sleep ...")
+                #print ("go to sleep ...")  # @DEBUG
                 self.condition.wait()
-              #  notation = (5,4)
-            #notation = raw_input("Please enter your action: ")
-                #self.condition.notify()
-            self.condition.release()
-            print ("waken up...", self.coordinate)
+            #print ("waken up...", self.coordinate)  # @DEBUG
             notation = str(chr(self.coordinate[1]+97))+str(self.coordinate[0]+1)
-            print notation
             self.coordinate = None
-            #time.sleep(4)
+            self.condition.release()
 
             action = self.board.pack_action(notation)
             if action is None:

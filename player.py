@@ -145,11 +145,17 @@ class HumanPlayer(object):
         self.board = board
         self.player = None
         self.history = []
+        self.coordinate = None
+
 
         # @NOTE for multithreading
         self.state_mutex = threading.Lock()
         self.status_text =''
         self.status_text_mutex = threading.Lock()
+
+        #@CH condition variable
+        self.condition = threading.Condition()
+
 
 
     def update(self, state):
@@ -168,17 +174,29 @@ class HumanPlayer(object):
         clock = pygame.time.Clock()
         window     = widget.Window(1200, 800, 'Welcome to Reversi AI', 'resources/images/background_100x100.png')
         keyboard   = widget.Keyboard()
-        board_widget      = widget.Board(window, 2, [0], players_name, 8, 8, 1, ('resources/images/black_82x82.png',         \
+        board_widget = widget.Board(window, 2, [0], players_name, 8, 8, 1, ('resources/images/black_82x82.png',         \
                           'resources/images/white_82x82.png', 'resources/images/board_82x82_b1.png'),                \
                           'resources/images/cursor_82x82.png')
         scoreboard = widget.ScoreBoard(window, 2, board_widget, ('resources/images/black_82x82.png',                               \
                                 'resources/images/white_82x82.png', 'resources/images/background_100x100.png'))
 
         while True:
-            # @ST if ESC is pressed, close window
-            if not keyboard.monitor():
+            if not keyboard.monitor(onkeydown_callback=board_widget.update):
                 window.quit()
                 return
+
+            self.condition.acquire()
+
+            if board_widget.get_location() is not None:
+
+                self.coordinate = board_widget.get_location()
+                print self.coordinate
+                self.condition.wait()
+            else:
+                print self.coordinate
+                self.condition.notify()
+            self.condition.release()
+            time.sleep(1)
 
             self.state_mutex.acquire()  # @ST self.history is shared among threads, we need a lock here
             if len(self.history) > 0:
@@ -209,6 +227,11 @@ class HumanPlayer(object):
             window.update()  # @ST @NOTE You must call window.update() after you have drawn everything needed, or the screnn will flicker and flicker...
             clock.tick(FPS)
 
+        while True:
+            # @ST if ESC is pressed, close window
+            if not keyboard.monitor():
+                window.quit()
+                return
 
     def winner_message(self, winners):
         return self.board.winner_message(winners)
@@ -216,8 +239,18 @@ class HumanPlayer(object):
     def get_action(self):
         while True:
             print(u"Please enter your action {0}: ".format(self.board.unicode_pieces[self.player]))
-            notation = raw_input()
+            #notation = raw_input()
+            self.condition.acquire()
+            if self.coordinate:
+                notation = str(chr(self.coordinate[0]+96))+str(self.coordinate[1])
+              #  notation = (5,4) 
             #notation = raw_input("Please enter your action: ")
+                self.condition.notify()
+            else:
+                self.condition.wait()
+            self.condition.release()
+            time.sleep(4)
+
             action = self.board.pack_action(notation)
             if action is None:
                 continue

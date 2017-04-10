@@ -223,6 +223,7 @@ class Client(object):
 
 
     def handle_my_turn(self):
+        # @TODO give me a signal that I can put a piece: position, signal
         action = self.player.get_action()
         message = {'type': 'action', 'message': action}
 

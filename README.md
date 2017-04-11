@@ -26,6 +26,10 @@ python2 player.py human -g  # for human player, add -g flag to enable gui
 python2 player.py mcts   # for AI, @NOTE AI does not have gui by now
 ```
 Or you can run two AIs and watch them to play.
+``` sh
+python2 player.py mcts  # AI1
+python2 player.py mcts2 #AI2
+```
 
 ### Or Run the Server Program on a Remote Server
 

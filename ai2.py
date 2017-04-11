@@ -7,6 +7,8 @@ import time
 from math import log, sqrt
 from random import choice
 import threading
+import pygame
+import widget
 
 def threaded(fn):  # @ST to wrap a thread function
     def wrapper(*args, **kwargs):
@@ -14,6 +16,8 @@ def threaded(fn):  # @ST to wrap a thread function
         thread.start()
         return thread
     return wrapper
+
+players_name = ['White', 'Black']  # @ST these names will be shown on GUI
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -30,7 +34,7 @@ class UCT(object):
 
         self.max_depth = 0
         self.data = {}
-        time = 1.8    # should be 1 min but in case that time is over
+        time = 3    # should be 1 min but in case that time is over
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 1000))
@@ -160,13 +164,13 @@ class UCT(object):
     def show_gui(self):
         FPS = 60
         clock = pygame.time.Clock()
-        window     = widget.Window(1200, 800, 'Welcome to Reversi AI', 'resources/images/background_100x100.png')
+        window     = widget.Window(1400, 800, 'Welcome to Reversi AI', 'resources/images/background_100x100.png')
         keyboard   = widget.Keyboard()
-        board_widget      = widget.Board(window, 2, [0], players_name, 8, 8, 1, ('resources/images/black_82x82.png',         \
-                          'resources/images/white_82x82.png', 'resources/images/board_82x82_b1.png'),                \
+        board_widget      = widget.Board(window, 2, [0], players_name, 8, 8, 1, ('resources/images/white_82x82.png',         \
+                          'resources/images/black_82x82.png', 'resources/images/board_82x82_b1.png'),                \
                           'resources/images/cursor_82x82.png')
-        scoreboard = widget.ScoreBoard(window, 2, board_widget, ('resources/images/black_82x82.png',                               \
-                                'resources/images/white_82x82.png', 'resources/images/background_100x100.png'))
+        scoreboard = widget.ScoreBoard(window, 2, board_widget, ('resources/images/white_82x82.png',                               \
+                                'resources/images/black_82x82.png', 'resources/images/background_100x100.png'))
 
         while True:
             # @ST if ESC is pressed, close window

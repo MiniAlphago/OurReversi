@@ -67,7 +67,6 @@ class Keyboard(object):
 
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                print('Closing window...')
                 return False
             self.keys[event.key] = True
             if onkeydown_callback: onkeydown_callback(self.keys)
@@ -179,11 +178,12 @@ class Board(object):
     def flutter_update(self):
         self.draw_self()
 
-    def draw_self(self, state):
+    def draw_self(self, state, is_cursor_on = False):
         self.window.draw_grid(self.anchor, self.block_size, state, self.pieces)
 
-        # @ST @NOTE if you want to draw the cursor, uncomment the function call below
-        self.window.draw_surface(self.anchor, (self.block_size[0]*self.cursor[0], self.block_size[1]*self.cursor[1]), self.cp)
+        # @ST @NOTE draw the cursor or not
+        if is_cursor_on:
+            self.window.draw_surface(self.anchor, (self.block_size[0]*self.cursor[0], self.block_size[1]*self.cursor[1]), self.cp)
 
 
 class ScoreBoard(object):

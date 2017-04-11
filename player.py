@@ -81,7 +81,7 @@ class Client(object):
                                 "Unexpected message from server: {0!r}".format(message))
 
                 self.handle_opponent_action(data)
-                #self.receiver[data['type']](data)
+
         # @ST game over
         if self.use_gui:
             try:
@@ -203,6 +203,13 @@ class Client(object):
         self.player.update(self.player.board.unpack_state(state))  # @ST put a piece and flip
         history_copy = self.player.history[:]
         self.player.state_mutex.release()
+
+        if self.use_gui:
+            self.player.status_text_mutex.acquire()
+            self.player.status_text = '{0}\'s Turn'.format(players_name[self.player.player - 1])
+            self.player.status_text_mutex.release()
+            print self.player.status_text  # @DEBUG
+
         print self.player.display(self.player.board.unpack_state(state), self.player.board.unpack_action(action))
 
         if self.player.board.is_ended(history_copy):
@@ -248,6 +255,12 @@ class Client(object):
         print self.player.display(self.player.board.unpack_state(state), self.player.board.unpack_action(action))
 
         self.send(message)
+
+        if self.use_gui:
+            self.player.status_text_mutex.acquire()
+            self.player.status_text = '{0}\'s Turn'.format(players_name[2 - self.player.player])
+            self.player.status_text_mutex.release()
+            print self.player.status_text  # @DEBUG
 
         if self.player.board.is_ended(history_copy):
 
@@ -315,6 +328,7 @@ class HumanPlayer(object):
                 self.condition.acquire()
                 self.condition.notify()  # gui is off
                 self.condition.release()
+                print('Closing window...')
                 window.quit()
                 return
 
@@ -349,7 +363,7 @@ class HumanPlayer(object):
             score[0] = format(score[0])
             score[1] = format(score[1])
             window.draw_background()
-            board_widget.draw_self(pieces)
+            board_widget.draw_self(pieces, True)
             self.status_text_mutex.acquire()  # @ST again, shared variable
             scoreboard.draw_self(score, self.status_text) # @ST display info about who's turn or who's the winner,
             self.status_text_mutex.release()

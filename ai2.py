@@ -6,7 +6,6 @@ from __future__ import division
 import time
 from math import log, sqrt
 from random import choice
-import threading
 
 
 class Stat(object):
@@ -28,11 +27,6 @@ class UCT(object):
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 1000))
-
-        # @NOTE for multithreading
-        self.state_mutex = threading.Lock()
-        self.status_text =''
-        self.status_text_mutex = threading.Lock()
 
         # Exploration constant, increase for more exploratory actions,
         # decrease to prefer actions with known higher win rates.
@@ -70,7 +64,7 @@ class UCT(object):
 
         games = 0
         begin = time.time()
-        while time.time() - begin < self.calculation_time:
+        while (time.time() - begin < self.calculation_time) and (self.max_depth<6):
             self.run_simulation()
             games += 1
 
@@ -160,8 +154,6 @@ class UCTWins(UCT):
 
     def calculate_action_values(self, state, player, legal):
         actions_states = ((p, self.board.next_state(state, p)) for p in legal)
-        #for p, S in actions_states:
-        #    print(p, S)  # @DEBUG
         return sorted(
             ({'action': p,
               'percent': 100 * self.stats[(player, S)].value / self.stats[(player, S)].visits,

@@ -43,207 +43,45 @@ python2 player.py mcts http://qcloud.stse.me 4242  # for AI, @NOTE AI does not h
 If you shut down one client, to make things work again, you have to **shut down the server and the other client** and then restart them.
 
 ## Message Conventions
+A client send its move to the server and receives its opponent's move from the server in the `json` format `{"x": column, "y": row}`, where column and row are integers between 1 and 8, inclusively.
 
-Message type:
-* player
-* update
-* action
-* decline
-* error
-* illegal
+If one player cannot find a valid move, he/she **MUST** send a `{"x": -1, "y": -1}` message to server.
 
-Note: update message has the following keys: state, type, board, last_action, winners, and points.
+```
+    1   2   3   4   5   6   7   8  
+  |-------------------------------|  
+1 |   |   |   |   |   |   |   |   |  
+  |-------------------------------|  
+2 |   |   |   |   |   |   |   |   |  
+  |-------------------------------|  
+3 |   |   |   |   |   |   |   |   |  
+  |-------------------------------|  
+4 |   |   |   | ● | ○ |   |   |   |  
+  |-------------------------------|  
+5 |   |   |   | ○ | ● |   |   |   |  
+  |-------------------------------|  
+6 |   |   |   |   |   |   |   |   |  
+  |-------------------------------|  
+7 |   |   |   |   |   |   |   |   |  
+  |-------------------------------|    
+8 |   |   |   |   |   |   |   |   |  
+  |-------------------------------|  
+```
+
+
 ### Examples
-
-When client connects to server, server sends the player number.
+A player puts a piece at (3, 5).
 ``` json
 {
-    "message": 2,
-    "type": "player"
+    "x": 3,
+    "y": 5
 }
 ```
 
-It's player 1's turn.
+No valid move, abandon.
 ``` json
 {
-    "state": {
-        "player": 1,
-        "previous_player": 2,
-        "pieces": [{
-            "column": 3,
-            "player": 2,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 4,
-            "player": 1,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 3,
-            "player": 1,
-            "type": "disc",
-            "row": 4
-        }, {
-            "column": 4,
-            "player": 2,
-            "type": "disc",
-            "row": 4
-        }]
-    },
-    "type": "update",
-    "board": null
-}
-```
-
-It's player 2's turn.
-``` json
-{
-    "state": {
-        "player": 2,
-        "previous_player": 1,
-        "pieces": [{
-            "column": 2,
-            "player": 1,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 3,
-            "player": 1,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 4,
-            "player": 1,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 3,
-            "player": 1,
-            "type": "disc",
-            "row": 4
-        }, {
-            "column": 4,
-            "player": 2,
-            "type": "disc",
-            "row": 4
-        }]
-    },
-    "type": "update",
-    "board": null,
-    "last_action": {
-        "player": 1,
-        "notation": "c4",
-        "sequence": 2
-    }
-}
-
-Player 2 sends its action to server.
-``` json
-{
-    "message": "c5",
-    "type": "action"
-}
-```
-
-Player 1's turn again.
-``` json
-{
-    "state": {
-        "player": 1,
-        "previous_player": 2,
-        "pieces": [{
-            "column": 2,
-            "player": 1,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 3,
-            "player": 1,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 4,
-            "player": 1,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 2,
-            "player": 2,
-            "type": "disc",
-            "row": 4
-        }, {
-            "column": 3,
-            "player": 2,
-            "type": "disc",
-            "row": 4
-        }, {
-            "column": 4,
-            "player": 2,
-            "type": "disc",
-            "row": 4
-        }]
-    },
-    "type": "update",
-    "board": null,
-    "last_action": {
-        "player": 2,
-        "notation": "c5",
-        "sequence": 3
-    }
-}
-```
-
-Player 2's turn again. Note that if someone wins, we will receive "winner" information
-``` json
-{
-    "state": {
-        "player": 2,
-        "previous_player": 1,
-        "pieces": [{
-            "column": 2,
-            "player": 1,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 3,
-            "player": 1,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 4,
-            "player": 1,
-            "type": "disc",
-            "row": 3
-        }, {
-            "column": 2,
-            "player": 1,
-            "type": "disc",
-            "row": 4
-        }, {
-            "column": 3,
-            "player": 1,
-            "type": "disc",
-            "row": 4
-        }, {
-            "column": 4,
-            "player": 2,
-            "type": "disc",
-            "row": 4
-        }, {
-            "column": 2,
-            "player": 1,
-            "type": "disc",
-            "row": 5
-        }]
-    },
-    "winners": {"1": 1, "2": 0},
-    "type": "update",
-    "board": null,
-    "last_action": {
-        "player": 1,
-        "notation": "c6",
-        "sequence": 4
-    }
+    "x": -1,
+    "y": -1
 }
 ```

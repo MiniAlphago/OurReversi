@@ -6,6 +6,7 @@ from __future__ import division
 import time
 from math import log, sqrt
 from random import choice
+import threading
 
 
 class Stat(object):
@@ -23,7 +24,7 @@ class UCT(object):
 
         self.max_depth = 0
         self.data = {}
-        time = 55    # should be 1 min but in case that time is over
+        time = 1.8    # should be 1 min but in case that time is over
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 1000))
@@ -31,6 +32,11 @@ class UCT(object):
         # Exploration constant, increase for more exploratory actions,
         # decrease to prefer actions with known higher win rates.
         self.C = float(kwargs.get('C', 1.96)) #Original1.4
+
+        # @NOTE for multithreading
+        self.state_mutex = threading.Lock()
+        self.status_text =''
+        self.status_text_mutex = threading.Lock()
 
     def update(self, state):
         self.history.append(self.board.pack_state(state))

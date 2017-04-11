@@ -42,6 +42,12 @@ python2 player.py mcts http://qcloud.stse.me 4242  # for AI, @NOTE AI does not h
 ### Note
 If you shut down one client, to make things work again, you have to **shut down the server and the other client** and then restart them.
 
+Once a client connects to a server successfully, you will be prompted:
+```
+Which player do you want to be, 1  ●  or 2  ○ ?
+```
+Then **only when there are two clients connected to the server can you input a number**. And if one client input a `1`, the other **MUST** input `2`, vice versa.
+
 ## Message Conventions
 A client send its move to the server and receives its opponent's move from the server in the `json` format `{"x": column, "y": row}`, where column and row are integers between 1 and 8, inclusively.
 

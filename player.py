@@ -66,6 +66,11 @@ class Client(object):
         while self.running:
             raw_message = self.recv(4096)
             messages = raw_message.rstrip().split('\r\n')
+            if self.use_gui:
+                self.player.status_text_mutex.acquire()
+                self.player.status_text = '{0}\'s Turn'.format(players_name[self.player.player - 1])
+                self.player.status_text_mutex.release()
+
             for message in messages:
                 try:
                     data = json.loads(message)
@@ -204,12 +209,6 @@ class Client(object):
         history_copy = self.player.history[:]
         self.player.state_mutex.release()
 
-        if self.use_gui:
-            self.player.status_text_mutex.acquire()
-            self.player.status_text = '{0}\'s Turn'.format(players_name[self.player.player - 1])
-            self.player.status_text_mutex.release()
-            print self.player.status_text  # @DEBUG
-
         print self.player.display(self.player.board.unpack_state(state), self.player.board.unpack_action(action))
 
         if self.player.board.is_ended(history_copy):
@@ -260,10 +259,8 @@ class Client(object):
             self.player.status_text_mutex.acquire()
             self.player.status_text = '{0}\'s Turn'.format(players_name[2 - self.player.player])
             self.player.status_text_mutex.release()
-            print self.player.status_text  # @DEBUG
 
         if self.player.board.is_ended(history_copy):
-
             win_msg = self.player.board.winner_message(self.player.board.win_values(history_copy))
             print(win_msg)
 

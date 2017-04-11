@@ -49,9 +49,10 @@ Which player do you want to be, 1  ●  or 2  ○ ?
 Then **only when there are two clients connected to the server can you input a number**. And if one client input a `1`, the other **MUST** input `2`, vice versa.
 
 ## Message Conventions
-A client send its move to the server and receives its opponent's move from the server in the `json` format `{"x": column, "y": row}`, where column and row are integers between 1 and 8, inclusively.
 
-If one player cannot find a valid move, he/she **MUST** send a `{"x": -1, "y": -1}` message to server.
+A client sends its action to the server and receives its opponent's action from the server in the `json` format `{"x": column, "y": row}`, where column and row are integers between 1 and 8, inclusively.
+
+If one player cannot find a valid action, he/she **MUST** send a `{"x": -1, "y": -1}` message to the server.
 
 ```
     1   2   3   4   5   6   7   8  
@@ -84,7 +85,7 @@ A player puts a piece at (3, 5).
 }
 ```
 
-No valid move, abandon.
+No valid action, abandon.
 ``` json
 {
     "x": -1,

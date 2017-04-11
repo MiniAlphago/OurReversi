@@ -187,7 +187,7 @@ class Client(object):
         self.player.state_mutex.acquire()
         if not self.player.board.is_legal(self.player.history, action):  # @ST @NOTE here we assume that we do not preempt
             # @ST maybe we have to wait again
-            invalid_msg = 'A ha! Your oponent put an invalid piece at row {0}, column {1}'.format(action[0] + 1, action[1] + 1)
+            invalid_msg = '{0}: invalid move at row {1}, column {2}'.format(players_name[data['state']['player'] - 1], action[0] + 1, action[1] + 1)
             print(invalid_msg)
             if self.use_gui:
                 self.player.status_text_mutex.acquire()
@@ -293,7 +293,7 @@ class HumanPlayer(object):
     def show_gui(self):
         FPS = 60
         clock = pygame.time.Clock()
-        window     = widget.Window(1200, 800, 'Welcome to Reversi AI', 'resources/images/background_100x100.png')
+        window     = widget.Window(1400, 800, 'Welcome to Reversi AI', 'resources/images/background_100x100.png')
         keyboard   = widget.Keyboard()
         board_widget = widget.Board(window, 2, [0], players_name, 8, 8, 1, ('resources/images/white_82x82.png',         \
                           'resources/images/black_82x82.png', 'resources/images/board_82x82_b1.png'),                \

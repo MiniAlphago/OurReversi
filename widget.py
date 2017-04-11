@@ -112,7 +112,7 @@ class Board(object):
     def get_location(self):
         if self.pressed and self.cursor:
             self.pressed = False
-            print 'get_location returned: ', self.cursor
+            #print 'get_location returned: ', self.cursor  # @ST @DEBUG info
             return self.cursor
         return None
 

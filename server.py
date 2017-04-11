@@ -75,7 +75,7 @@ class Server(object):
     def connection(self, socket, address):
         print "connection:", socket
         self.socket.append(socket)
-        self.local.socket = socket
+        self.local.socket_index = len(self.socket) - 1
         if self.player_numbers.empty():
             self.send({
                 'type': 'decline', 'message': "Game in progress."
@@ -120,7 +120,7 @@ class Server(object):
                 #while not self.two_players_connected:
                 #    print('waiting for player 2')
                 #    continue
-                self.send_opponent(self.players[3 - self.local.player].get(), self.socket[2 - self.local.player])  # @TODO we have to wait until two clients are connected
+                self.send_opponent(self.players[3 - self.local.player].get(), self.socket[1 - self.local.socket_index])  # @TODO we have to wait until two clients are connected
 
             except Exception as e:
                 print e, 'blabla'

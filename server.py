@@ -12,17 +12,16 @@ import thread
 
 import gevent, gevent.local, gevent.queue, gevent.server
 
-
 class Server(object):
     def __init__(self, board, addr=None, port=None, use_gui = False):
         self.board = board
         self.states = []  # @ST @NOTE it stores the whole history of the game, but actually we are only insterested in self.states[-1]
         self.local = gevent.local.local()
         self.server = None
-        # player message queues
+        # player message queues??????????????????
         self.players = dict((x, gevent.queue.Queue())
                             for x in xrange(1, self.board.num_players+1))
-        # random player selection @ST ??? for what
+        # random player selection @ST ??? for what????????????????????/
         self.player_numbers = gevent.queue.JoinableQueue()
 
         self.addr = addr if addr is not None else '127.0.0.1'
@@ -40,7 +39,6 @@ class Server(object):
             # show gui
             #if self.use_gui:
             #    thread.start_new_thread(self.board.gui.run())  # @TODO it seems unnecessary to show gui in server
-
             # update all players with the starting state
             state = self.board.unpack_state(state)
             # board = self.board.get_description()
@@ -51,9 +49,9 @@ class Server(object):
                     'state': state,
                 })
 
-            # randomize the player selection
+            # randomize the player selection,@TODO maybe we need a select players themselves
             players = range(1, self.board.num_players+1)
-            random.shuffle(players)
+            random.shuffle(players) #@TODO should not appear here
             for p in players:
                 self.player_numbers.put_nowait(p)
 
@@ -61,7 +59,9 @@ class Server(object):
             self.player_numbers.join()
 
     def run(self):
-        game = gevent.spawn(self.game_reset)
+        ##game = gevent.spawn(self.game_reset)intialize
+
+        self.game = gevent.spawn(self.game_reset)
         self.server = gevent.server.StreamServer((self.addr, self.port),
                                                  self.connection)
         print "Starting server..."
@@ -173,6 +173,7 @@ class Server(object):
         return ''.join(total_data)
 
 if __name__ == '__main__':
+    # argparser:the recommended command-line parsing module in the Python standard library
     parser = argparse.ArgumentParser(
         description="A server for board game with/without gui")
     parser.add_argument('-g', '--gui', action = 'store_true', dest = 'use_gui', default = False)

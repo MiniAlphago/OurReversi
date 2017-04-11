@@ -27,6 +27,7 @@ class Board(object):
 
     def starting_state(self):
         # p1 placed, p2 placed, previous player, player to move
+        #(3,3),(4,4)white
         return (self.positions[(3,4)] + self.positions[(4,3)],
                 self.positions[(3,3)] + self.positions[(4,4)], 2, 1)
 

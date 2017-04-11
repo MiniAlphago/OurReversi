@@ -2,11 +2,11 @@
 
 ## Schedule
 
-| Task | Due | Responsibility | Done |
+| Task | Due Date | Responsibility | Done |
 | --- | --- | --- | :---: |
-| Reconstruction | Apr 10, 24:00 UTC + 8 | [Stephen Tse](https://github.com/xjiajiahao) | ✓ |
-| GUI | Apr 10, 24:00 UTC + 8  | [chchenhui](https://github.com/chchenhui) | `TODO` |
-| MCTS | Apr 10, 24:00 UTC + 8  | [Joscar Jiang](https://github.com/JoscarJiang) | `TODO` |
+| Reconstruction | Apr 10 | [Stephen Tse](https://github.com/xjiajiahao) | ✓ |
+| GUI | Apr 10 | [chchenhui](https://github.com/chchenhui) | `TODO` |
+| MCTS | Apr 10 | [Joscar Jiang](https://github.com/JoscarJiang) | `TODO` |
 
 ## Dependencies
 * pygame

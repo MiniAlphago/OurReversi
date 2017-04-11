@@ -1,5 +1,6 @@
 # reference:
 # https://github.com/jbradberry/mcts
+
 from __future__ import division
 
 import time
@@ -14,7 +15,6 @@ class Stat(object):
         self.value = value
         self.visits = visits
 
-
 class UCT(object):
     def __init__(self, board, **kwargs):
         self.board = board
@@ -23,13 +23,14 @@ class UCT(object):
 
         self.max_depth = 0
         self.data = {}
-
-        self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
+        time = 55    # should be 1 min but in case that time is over
+        self.calculation_time = float(time)
+        # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 1000))
 
         # Exploration constant, increase for more exploratory actions,
         # decrease to prefer actions with known higher win rates.
-        self.C = float(kwargs.get('C', 1.4))
+        self.C = float(kwargs.get('C', 1.96)) #Original1.4
 
     def update(self, state):
         self.history.append(self.board.pack_state(state))
@@ -43,6 +44,7 @@ class UCT(object):
         return self.board.winner_message(winners)
 
     def get_action(self):
+
         # Causes the AI to calculate the best action from the
         # current game state and return it.
 
@@ -81,26 +83,29 @@ class UCT(object):
         # Pick the action with the highest average value.
         return self.board.unpack_action(self.data['actions'][0]['action'])
 
+    # Here we run the simulation
     def run_simulation(self):
         # Plays out a "random" game from the current position,
         # then updates the statistics tables with the result.
 
         # A bit of an optimization here, so we have a local
-        # variable lookup instead of an attribute access each loop.
-        stats = self.stats
+        # variable lookup instead of an attribute access each loop. 6
 
+        stats = self.stats
         visited_states = set()
         history_copy = self.history[:]
         state = history_copy[-1]
         player = self.board.current_player(state)
 
         expand = True
+
+        # the most important part
+        # Use UCB to evaluate the nodes and
         for t in xrange(1, self.max_actions + 1):
             legal = self.board.legal_actions(history_copy)
             actions_states = [(p, self.board.next_state(state, p)) for p in legal]
 
             if all((player, S) in stats for p, S in actions_states):
-                # If we have stats on all of the legal actions here, use UCB1.
                 log_total = log(
                     sum(stats[(player, S)].visits for p, S in actions_states) or 1)
                 value, action, state = max(
@@ -114,6 +119,7 @@ class UCT(object):
 
             history_copy.append(state)
 
+            # Expand
             # `player` here and below refers to the player
             # who moved into that particular state.
             if expand and (player, state) not in stats:
@@ -129,6 +135,7 @@ class UCT(object):
                 break
 
         # Back-propagation
+        #
         end_values = self.end_values(history_copy)
         for player, state in visited_states:
             if (player, state) not in stats:

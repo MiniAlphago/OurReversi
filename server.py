@@ -113,7 +113,7 @@ class Server(object):
                     self.two_players_connected = True
                     print('player {0} connected.'.format(self.local.player))  # @DEBUG
 
-                print(messages[0], self.local.player)  # @DEBUG
+                print u'player {0} {1}:'.format(self.local.player, self.board.unicode_pieces[self.local.player]),  messages[0] # @DEBUG
                 self.players[3 - self.local.player].put(messages[0])
 
                 # @ST @FIXME I want to wait until two clients have connected to the server
@@ -123,7 +123,7 @@ class Server(object):
                 self.send_opponent(self.players[3 - self.local.player].get(), self.socket[1 - self.local.socket_index])  # @TODO we have to wait until two clients are connected
 
             except Exception as e:
-                print e, 'blabla'
+                print e
                 socket.close()
                 self.player_numbers.put_nowait(self.local.player)
                 #self.players[self.local.player].put_nowait(data)

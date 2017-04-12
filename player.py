@@ -64,7 +64,7 @@ class Client(object):
         #    self.handle_my_turn()
 
         while self.running:
-            raw_message = self.recv(4096)
+            raw_message = self.socket.recv(4096)
             messages = raw_message.rstrip().split('\r\n')
             if self.use_gui:
                 self.player.status_text_mutex.acquire()
@@ -78,13 +78,7 @@ class Client(object):
                     #    raise ValueError(
                     #        "Unexpected message from server: {0!r}".format(message))
                 except ValueError:  # @ST in case we receive two or more messages
-                    size = struct.unpack('>i', message[:4])[0]
-                    if size == len(message) - 2:
-                        data = json.loads(message[4:])
-                        if data['type'] not in self.receiver:
-                            raise ValueError(
-                                "Unexpected message from server: {0!r}".format(message))
-
+                        raise ValueError("Unexpected message from server: {0!r}".format(message))
                 self.handle_opponent_action(data)
 
         # @ST game over
@@ -146,7 +140,7 @@ class Client(object):
         wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
         #print(data_json)  # @DEBUG
-        self.socket.sendall(struct.pack('>i', len(data_json))+data_json)
+        self.socket.sendall(data_json)
 
     def recv(self, expected_size):
         #data length is packed into 4 bytes

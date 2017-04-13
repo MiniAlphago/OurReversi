@@ -102,7 +102,7 @@ class Server(object):
                 #    pass
 
 
-                message = self.recv(socket, 4096)
+                message = socket.recv(4096)
                 messages = message.rstrip().split('\r\n')  # FIXME @ST \r\n is disgusting
 
                 if not self.players_first:
@@ -175,7 +175,7 @@ class Server(object):
         if not data.get('x') or not data.get('y'):
             return
         data_json = "{0}\r\n".format(json.dumps(data))
-        socket.sendall(struct.pack('>i', len(data_json))+data_json)
+        socket.sendall(data_json)
 
     def send(self, data):
         # @ST we need to wrap our communication protocol

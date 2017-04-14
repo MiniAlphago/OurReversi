@@ -7,6 +7,7 @@ import time
 from math import log, sqrt
 from random import choice
 import ai
+import threading
 
 class Stat(object):
     __slots__ = ('value', 'visits')

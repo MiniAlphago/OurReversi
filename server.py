@@ -124,7 +124,7 @@ class Server(object):
                 self.send_opponent(self.players[3 - self.local.player].get(), self.socket[1 - self.local.socket_index])  # @TODO we have to wait until two clients are connected
 
             except Exception as e:
-                print e
+                print e, message
                 socket.close()
                 self.player_numbers.put_nowait(self.local.player)
                 #self.players[self.local.player].put_nowait(data)

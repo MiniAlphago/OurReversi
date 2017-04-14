@@ -172,6 +172,7 @@ class Server(object):
 
     def send_opponent(self, data, socket):
         data = json.loads(data)
+
         if not data.get('x') or not data.get('y'):
             return
         data_json = "{0}\r\n".format(json.dumps(data))

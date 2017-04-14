@@ -194,6 +194,15 @@ class Board(object):
 
         return {1: p1_score, 2: p2_score}
 
+    def not_ended_points_values(self, history):
+        state = history[-1]
+        p1_placed, p2_placed, previous, player = state
+
+        p1_score = bin(p1_placed).count('1')
+        p2_score = bin(p2_placed).count('1')
+
+        return {1: p1_score, 2: p2_score}
+
     def winner_message(self, winners):
         winners = sorted((v, k) for k, v in winners.iteritems())
         value, winner = winners[-1]

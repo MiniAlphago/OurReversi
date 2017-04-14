@@ -57,9 +57,11 @@ class UCT(ai.AI):
         self.games_mutex = threading.Lock()
         # @TODO multithreading here
         pool = ThreadPool()
-        statsList = pool.map(self.simulation_thread, list(range(4)))
+        statsList = pool.map(self.simulation_thread, list(range(2)))
         for stats in statsList:
             for key in stats.keys():
+                # @DEBUG
+                print stats[key].value, stats[key].visits
                 S = self.stats.setdefault(key, Stat())
                 S.value += stats[key].value
                 S.visits += stats[key].visits

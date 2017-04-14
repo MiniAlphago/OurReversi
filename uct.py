@@ -8,6 +8,7 @@ from math import log, sqrt
 from random import choice
 import ai
 import threading
+from multiprocessing.dummy import Pool as ThreadPool
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -34,6 +35,7 @@ class UCT(ai.AI):
 
     def get_action(self):
 
+        begin = time.time()
         # Causes the AI to calculate the best action from the
         # current game state and return it.
 
@@ -51,15 +53,20 @@ class UCT(ai.AI):
         if len(legal) == 1:
             return self.board.unpack_action(legal[0])
 
-        games = 0
-        begin = time.time()
-        while time.time() - begin < self.calculation_time:
-            self.run_simulation()
-            games += 1
+        self.games = 0
+        self.games_mutex = threading.Lock()
+        # @TODO multithreading here
+        pool = ThreadPool()
+        statsList = pool.map(self.simulation_thread, list(range(4)))
+        for stats in statsList:
+            for key in stats.keys():
+                S = self.stats.setdefault(key, Stat())
+                S.value += stats[key].value
+                S.visits += stats[key].visits
 
         # Display the number of calls of `run_simulation` and the
         # time elapsed.
-        self.data.update(games=games, max_depth=self.max_depth,
+        self.data.update(games=self.games, max_depth=self.max_depth,
                          time=str(time.time() - begin))
         print self.data['games'], self.data['time']
         print "Maximum depth searched:", self.max_depth
@@ -72,15 +79,26 @@ class UCT(ai.AI):
         # Pick the action with the highest average value.
         return self.board.unpack_action(self.data['actions'][0]['action'])
 
+    def simulation_thread(self, i):  # @ST @NOTE here `i` is useless
+        begin = time.time()
+        stats = {}
+        while time.time() - begin < self.calculation_time:
+            self.run_simulation(stats)
+            self.games_mutex.acquire()
+            self.games += 1
+            self.games_mutex.release()
+        return stats
+
+
     # Here we run the simulation
-    def run_simulation(self):
+    def run_simulation(self, stats):
         # Plays out a "random" game from the current position,
         # then updates the statistics tables with the result.
 
         # A bit of an optimization here, so we have a local
         # variable lookup instead of an attribute access each loop. 6
 
-        stats = self.stats
+        #stats = {}
         visited_states = set()
         history_copy = self.history[:]
         state = history_copy[-1]
@@ -132,6 +150,7 @@ class UCT(ai.AI):
             S = stats[(player, state)]
             S.visits += 1
             S.value += end_values[player]
+        return stats
 
 class UCTWins(UCT):
     action_template = "{action}: {percent:.2f}% ({wins} / {plays})"

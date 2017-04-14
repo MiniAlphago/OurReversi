@@ -124,7 +124,7 @@ class Server(object):
                 self.send_opponent(self.players[3 - self.local.player].get(), self.socket[1 - self.local.socket_index])  # @TODO we have to wait until two clients are connected
 
             except Exception as e:
-                print e, message
+                print e
                 socket.close()
                 self.player_numbers.put_nowait(self.local.player)
                 #self.players[self.local.player].put_nowait(data)
@@ -172,6 +172,7 @@ class Server(object):
 
     def send_opponent(self, data, socket):
         data = json.loads(data)
+
         if not data.get('x') or not data.get('y'):
             return
         data_json = "{0}\r\n".format(json.dumps(data))

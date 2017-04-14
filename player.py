@@ -84,11 +84,11 @@ class Client(object):
 
         # @ST game over
         if self.use_gui:
-            try:
-                while True:
-                    continue  # @ST do nothing, just waiting to exit
-            except KeyboardInterrupt:
-                pass
+        #     try:
+        #         while True:
+        #             continue  # @ST do nothing, just waiting to exit
+        #     except KeyboardInterrupt:
+        #         pass
             # join gui thread
             show_gui_thread.join()
 

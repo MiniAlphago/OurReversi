@@ -53,12 +53,12 @@ class UCT(ai.AI):
         if len(legal) == 1:
             return self.board.unpack_action(legal[0])
 
-        self.games = 0
-        self.games_mutex = threading.Lock()
+        games = 0
         # @TODO multithreading here
         pool = ThreadPool()
-        statsList = pool.map(self.simulation_thread, list(range(2)))
-        for stats in statsList:
+        result = pool.map(self.simulation_thread, list(range(2)))
+        for stats, game_times in result:
+            games += game_times
             for key in stats.keys():
                 # @DEBUG
                 print stats[key].value, stats[key].visits
@@ -68,7 +68,7 @@ class UCT(ai.AI):
 
         # Display the number of calls of `run_simulation` and the
         # time elapsed.
-        self.data.update(games=self.games, max_depth=self.max_depth,
+        self.data.update(games=games, max_depth=self.max_depth,
                          time=str(time.time() - begin))
         print self.data['games'], self.data['time']
         print "Maximum depth searched:", self.max_depth
@@ -82,14 +82,13 @@ class UCT(ai.AI):
         return self.board.unpack_action(self.data['actions'][0]['action'])
 
     def simulation_thread(self, i):  # @ST @NOTE here `i` is useless
+        games = 0
         begin = time.time()
         stats = {}
         while time.time() - begin < self.calculation_time:
             self.run_simulation(stats)
-            self.games_mutex.acquire()
-            self.games += 1
-            self.games_mutex.release()
-        return stats
+            games += 1
+        return stats, games
 
 
     # Here we run the simulation

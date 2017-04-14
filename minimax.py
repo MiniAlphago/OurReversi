@@ -21,13 +21,13 @@ class MiniMax(ai.AI):
     def Max(self, state, depth, alpha, beta, player):
         if depth == 0:
             #return self.board.not_ended_points_values([state])[1], None  # return [point, action]
-            return self.EvaluateState(state, player) * 1e7, None
+            return self.EvaluateState(state) * 1e7, None
 
         legal = self.board.legal_actions([state])
         if not legal:
             if self.board.is_ended([state]):
                 #best = self.board.not_ended_points_values([state])[1]
-                best = self.EvaluateState(state, player) * 1e7
+                best = self.EvaluateState(state) * 1e7
                 #print 'max: time to return', 'best: ', best, 'alpha: ', alpha, 'beta: ', beta# @DEBUG
                 return best, None
             return Min(state, depth, alpha, beta, 3 - player)
@@ -48,13 +48,13 @@ class MiniMax(ai.AI):
     def Min(self, state, depth, alpha, beta, player):
         if depth == 0:
             #return self.board.not_ended_points_values([state])[1], None  # return [point, action]
-            return self.EvaluateState(state, player) * 1e7, None
+            return self.EvaluateState(state) * 1e7, None
 
         legal = self.board.legal_actions([state])
         if not legal:
             if self.board.is_ended([state]):
                 #best = self.board.not_ended_points_values([state])[1]
-                best = self.EvaluateState(state, player) * 1e7
+                best = self.EvaluateState(state) * 1e7
                 #print 'min: time to return', 'best: ', best, 'alpha: ', alpha, 'beta: ', beta# @DEBUG
                 return best, None
             return Max(state, depth, alpha, beta, 3 - player)
@@ -73,15 +73,16 @@ class MiniMax(ai.AI):
                 best_action = oneAction
         return best, best_action
 
-    def EvaluateState(self, state, player):
+    def EvaluateState(self, state):
         w, b = self.eval_engine.to_bitboard(state)
         #print 'debug:', player, self.eval_engine.eval(w, b), self.eval_engine.eval(b, w)
-        if player == 1:
-            res = self.eval_engine.eval(b, w)
-        elif player == 2:
-            res = -self.eval_engine.eval(b, w)
+        #if player == 1:
+        res = self.eval_engine.eval(w, b)
+        #elif player == 2:
+        #    res = self.eval_engine.eval(b, w)
         return res
 
+# @NOTE Acknowledgement: the evaluation function is written by the TA of another AI class, which is awesome
 class Eval(object):
     def __init__(self, board, **kwargs):
         self.board = board
@@ -144,7 +145,7 @@ class Eval(object):
         return scorepiece + scoreunstable + scoremob
 
     def to_bitboard(self, state):
-        pieces = [[-1]*self.board.cols for _ in range(self.board.rows)]  # @ST @NOTE we use -1 for empty, 0 for player 1 and 1 for player 2
+        pieces = [[0]*self.board.cols for _ in range(self.board.rows)]  # @ST @NOTE we use 0 for empty, 1 for player 1 and -1 for player 2
         p1_placed, p2_placed, previous, player = state
         for r in xrange(self.board.rows):
             for c in xrange(self.board.cols):

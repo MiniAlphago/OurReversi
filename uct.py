@@ -58,10 +58,12 @@ class UCT(ai.AI):
         pool = ThreadPool()
         result = pool.map(self.simulation_thread, list(range(2)))
         for stats, game_times in result:
+            # @DEBUG
+            print 'games:', game_times
             games += game_times
             for key in stats.keys():
                 # @DEBUG
-                print stats[key].value, stats[key].visits
+                #print stats[key].value, stats[key].visits
                 S = self.stats.setdefault(key, Stat())
                 S.value += stats[key].value
                 S.visits += stats[key].visits

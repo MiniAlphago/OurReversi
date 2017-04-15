@@ -25,7 +25,7 @@ class UCT(ai.AI):
 
         self.max_depth = 0
         self.data = {}
-        time = 15    # should be 1 min but in case that time is over
+        time = 30    # should be 1 min but in case that time is over
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 1000))

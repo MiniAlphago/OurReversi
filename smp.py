@@ -72,17 +72,40 @@ class UCT(ai.AI):
         for i in range(processes_num):
             processes[i].join()
 
+        voting = {}
+        for p in legal:
+            voting[p] = {'votes': 0, 'wins': 0, 'visits': 0}
+
+
         for stats, game_times, max_depth in result:
             # @DEBUG
             print 'games:', game_times
             games += game_times
             self.max_depth = max(self.max_depth, max_depth)
-            for key in stats.keys():
-                # @DEBUG
-                #print stats[key].value, stats[key].visits
-                S = self.stats.setdefault(key, Stat())
-                S.value += stats[key].value
-                S.visits += stats[key].visits
+
+            actions = self.calculate_action_values(state, player, legal, stats)
+            highest_score = actions[0]['percent']
+            #print actions[0]['wins']
+            for action in actions:
+                #tmp = voting[action['action']]
+                #print tmp, tmp['wins']
+                if action['percent'] == highest_score:
+                    voting[action['action']]['votes'] += 1
+                    voting[action['action']]['wins'] += action['wins']
+                    voting[action['action']]['visits'] += action['plays']
+                else:
+                    break
+
+            # for key in stats.keys():
+            #     # @DEBUG
+            #     #print stats[key].value, stats[key].visits
+            #     S = self.stats.setdefault(key, Stat())
+            #     S.value += stats[key].value
+            #     S.visits += stats[key].visits
+        for key in voting.keys():  # @DEBUG
+            if voting[key]['votes'] == 0:
+                continue
+            print 'action:', self.board.unpack_action(key), 'votes:', voting[key]['votes'], 'average: {0:.2f}%'.format(100 * voting[key]['wins'] / voting[key]['visits']), '({0}/{1})'.format(voting[key]['wins'], voting[key]['visits'])
 
         # Display the number of calls of `run_simulation` and the
         # time elapsed.
@@ -92,12 +115,16 @@ class UCT(ai.AI):
         print "Maximum depth searched:", self.max_depth
 
         # Store and display the stats for each possible action.
-        self.data['actions'] = self.calculate_action_values(state, player, legal)
-        for m in self.data['actions']:
-            print self.action_template.format(**m)
+        self.data['actions'] = sorted(
+            voting.items(),
+            key = lambda x: (x[1]['votes'], x[1]['wins'], x[1]['visits']),
+            reverse=True
+        )
+        # for m in self.data['actions']:
+        #     print self.action_template.format(**m)
 
         # Pick the action with the highest average value.
-        return self.board.unpack_action(self.data['actions'][0]['action'])
+        return self.board.unpack_action(self.data['actions'][0][0])
 
     def simulation_worker(self, queue):  # @ST @NOTE here `i` is useless
         games = 0
@@ -180,13 +207,13 @@ class UCTWins(UCT):
         super(UCTWins, self).__init__(board, **kwargs)
         self.end_values = board.win_values
 
-    def calculate_action_values(self, state, player, legal):
+    def calculate_action_values(self, state, player, legal, tree):
         actions_states = ((p, self.board.next_state(state, p)) for p in legal)
         return sorted(
             ({'action': p,
-              'percent': 100 * self.stats[(player, S)].value / self.stats[(player, S)].visits,
-              'wins': self.stats[(player, S)].value,
-              'plays': self.stats[(player, S)].visits}
+              'percent': 100 * tree[(player, S)].value / tree[(player, S)].visits,
+              'wins': tree[(player, S)].value,
+              'plays': tree[(player, S)].visits}
              for p, S in actions_states),
             key=lambda x: (x['percent'], x['plays']),
             reverse=True
@@ -200,13 +227,13 @@ class UCTValues(UCT):
         super(UCTValues, self).__init__(board, **kwargs)
         self.end_values = board.points_values
 
-    def calculate_action_values(self, state, player, legal):
+    def calculate_action_values(self, state, player, legal, tree):
         actions_states = ((p, self.board.next_state(state, p)) for p in legal)
         return sorted(
             ({'action': p,
-              'average': self.stats[(player, S)].value / self.stats[(player, S)].visits,
-              'sum': self.stats[(player, S)].value,
-              'plays': self.stats[(player, S)].visits}
+              'average': tree[(player, S)].value / tree[(player, S)].visits,
+              'sum': tree[(player, S)].value,
+              'plays': tree[(player, S)].visits}
              for p, S in actions_states),
             key=lambda x: (x['average'], x['plays']),
             reverse=True

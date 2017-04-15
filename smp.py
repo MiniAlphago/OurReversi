@@ -57,7 +57,7 @@ class UCT(ai.AI):
         games = 0
         # @TODO multithreading here
         queue = Queue()
-        processes_num = 1
+        processes_num = 2
         processes = []
         result = []
         for i in range(processes_num):
@@ -84,17 +84,26 @@ class UCT(ai.AI):
             self.max_depth = max(self.max_depth, max_depth)
 
             actions = self.calculate_action_values(state, player, legal, stats)
-            highest_score = actions[0]['percent']
+            #highest_score = actions[0]['percent']
             #print actions[0]['wins']
             for action in actions:
-                #tmp = voting[action['action']]
-                #print tmp, tmp['wins']
-                if action['percent'] == highest_score:
-                    voting[action['action']]['votes'] += 1
-                    voting[action['action']]['wins'] += action['wins']
-                    voting[action['action']]['visits'] += action['plays']
-                else:
-                    break
+                print self.action_template.format(**action)
+            print '\n'
+
+            action = actions[0]
+            voting[action['action']]['votes'] += 1
+            voting[action['action']]['wins'] += action['wins']
+            voting[action['action']]['visits'] += action['plays']
+
+            # for action in actions:
+            #     #tmp = voting[action['action']]
+            #     #print tmp, tmp['wins']
+            #     if action['percent'] == highest_score:
+            #         voting[action['action']]['votes'] += 1
+            #         voting[action['action']]['wins'] += action['wins']
+            #         voting[action['action']]['visits'] += action['plays']
+            #     else:
+            #         break
 
             # for key in stats.keys():
             #     # @DEBUG
@@ -117,7 +126,7 @@ class UCT(ai.AI):
         # Store and display the stats for each possible action.
         self.data['actions'] = sorted(
             voting.items(),
-            key = lambda x: (x[1]['votes'], x[1]['wins'], x[1]['visits']),
+            key = lambda x: (x[1]['votes'], x[1]['wins']/x[1]['visits']),
             reverse=True
         )
         # for m in self.data['actions']:

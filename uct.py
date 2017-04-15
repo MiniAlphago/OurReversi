@@ -8,7 +8,8 @@ from math import log, sqrt
 from random import choice
 import ai
 import threading
-import Queue
+from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import Process, Queue
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -24,7 +25,7 @@ class UCT(ai.AI):
 
         self.max_depth = 0
         self.data = {}
-        time = 30    # should be 1 min but in case that time is over
+        time = 15    # should be 1 min but in case that time is over
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 1000))
@@ -55,25 +56,27 @@ class UCT(ai.AI):
 
         games = 0
         # @TODO multithreading here
-        queue = Queue.Queue()
-        threads_num = 4
-        threads = []
+        queue = Queue()
+        processes_num = 9
+        processes = []
         result = []
-        for i in range(threads_num):
-            t = threading.Thread(target=self.simulation_thread, args = (queue,))
-            threads.append(t)
+        for i in range(processes_num):
+            p = Process(target=self.simulation_worker, args = (queue,))
+            p.Daemon = True
+            p.start()
+            processes.append(p)
 
-        for i in range(threads_num):
-            threads[i].start()
-
-        for i in range(threads_num):
-            threads[i].join()
+        for i in range(processes_num):
             result.append(queue.get())
 
-        for stats, game_times in result:
+        for i in range(processes_num):
+            processes[i].join()
+
+        for stats, game_times, max_depth in result:
             # @DEBUG
             print 'games:', game_times
             games += game_times
+            self.max_depth = max(self.max_depth, max_depth)
             for key in stats.keys():
                 # @DEBUG
                 #print stats[key].value, stats[key].visits
@@ -96,14 +99,14 @@ class UCT(ai.AI):
         # Pick the action with the highest average value.
         return self.board.unpack_action(self.data['actions'][0]['action'])
 
-    def simulation_thread(self, queue):  # @ST @NOTE here `i` is useless
+    def simulation_worker(self, queue):  # @ST @NOTE here `i` is useless
         games = 0
         begin = time.time()
         stats = {}
         while time.time() - begin < self.calculation_time:
-            self.run_simulation(stats)
+            max_depth = self.run_simulation(stats)
             games += 1
-        queue.put([stats, games])
+        queue.put([stats, games, max_depth])
         return
 
 
@@ -116,6 +119,7 @@ class UCT(ai.AI):
         # variable lookup instead of an attribute access each loop. 6
 
         #stats = {}
+        max_depth = 0
         visited_states = set()
         history_copy = self.history[:]
         state = history_copy[-1]
@@ -149,8 +153,8 @@ class UCT(ai.AI):
             if expand and (player, state) not in stats:
                 expand = False
                 stats[(player, state)] = Stat()
-                if t > self.max_depth:
-                    self.max_depth = t
+                if t > max_depth:
+                    max_depth = t
 
             visited_states.add((player, state))
 
@@ -167,7 +171,7 @@ class UCT(ai.AI):
             S = stats[(player, state)]
             S.visits += 1
             S.value += end_values[player]
-        return stats
+        return max_depth
 
 class UCTWins(UCT):
     action_template = "{action}: {percent:.2f}% ({wins} / {plays})"

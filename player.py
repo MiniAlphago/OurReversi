@@ -9,6 +9,7 @@ import sys
 import reversi
 import uct
 import uct2
+import smp
 import minimax
 import argparse
 import struct
@@ -424,7 +425,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     board = reversi.Board
-    player_dict = {'human': HumanPlayer, 'mcts': uct.UCTWins,'mcts2':uct2.UCTWins, 'minimax': minimax.MiniMax}   # @TODO we need to use our own AIs
+    player_dict = {'human': HumanPlayer, 'mcts': uct.UCTWins,'mcts2':uct2.UCTWins, 'minimax': minimax.MiniMax, 'smp': smp.UCTWins}   # @TODO we need to use our own AIs
     player_obj = player_dict[args.player]
     player_kwargs = dict(arg.split('=') for arg in args.extra or ())
 

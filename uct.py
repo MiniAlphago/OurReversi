@@ -8,7 +8,7 @@ from math import log, sqrt
 from random import choice
 import ai
 import threading
-from multiprocessing.dummy import Pool as ThreadPool
+import Queue
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -55,8 +55,19 @@ class UCT(ai.AI):
 
         games = 0
         # @TODO multithreading here
-        pool = ThreadPool()
-        result = pool.map(self.simulation_thread, list(range(2)))
+        queue = Queue.Queue()
+        threads_num = 4
+        threads = []
+        result = []
+        for i in range(threads_num):
+            t = threading.Thread(target=simulation_thread, arg = (queue))
+            threads.append(t)
+            t.start()
+
+        for i in range(threads_num):
+            threads[i].join()
+            result.append(queue.get())
+
         for stats, game_times in result:
             # @DEBUG
             print 'games:', game_times
@@ -83,14 +94,15 @@ class UCT(ai.AI):
         # Pick the action with the highest average value.
         return self.board.unpack_action(self.data['actions'][0]['action'])
 
-    def simulation_thread(self, i):  # @ST @NOTE here `i` is useless
+    def simulation_thread(self, queue):  # @ST @NOTE here `i` is useless
         games = 0
         begin = time.time()
         stats = {}
         while time.time() - begin < self.calculation_time:
             self.run_simulation(stats)
             games += 1
-        return stats, games
+        queue.put([stats, games])
+        return
 
 
     # Here we run the simulation

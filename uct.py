@@ -9,6 +9,7 @@ from random import choice
 import ai
 import threading
 from multiprocessing.dummy import Pool as ThreadPool
+from multiprocessing import Process, Queue
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -57,10 +58,11 @@ class UCT(ai.AI):
         # @TODO multithreading here
         pool = ThreadPool(4)
         result = pool.map(self.simulation_thread, list(range(4)))
-        for stats, game_times in result:
+        for stats, game_times, max_depth in result:
             # @DEBUG
             print 'games:', game_times
             games += game_times
+            self.max_depth = max(self.max_depth, max_depth)
             for key in stats.keys():
                 # @DEBUG
                 #print stats[key].value, stats[key].visits
@@ -88,9 +90,9 @@ class UCT(ai.AI):
         begin = time.time()
         stats = {}
         while time.time() - begin < self.calculation_time:
-            self.run_simulation(stats)
+            max_depth = self.run_simulation(stats)
             games += 1
-        return stats, games
+        return stats, games, max_depth
 
 
     # Here we run the simulation
@@ -102,6 +104,7 @@ class UCT(ai.AI):
         # variable lookup instead of an attribute access each loop. 6
 
         #stats = {}
+        max_depth = 0
         visited_states = set()
         history_copy = self.history[:]
         state = history_copy[-1]
@@ -135,8 +138,8 @@ class UCT(ai.AI):
             if expand and (player, state) not in stats:
                 expand = False
                 stats[(player, state)] = Stat()
-                if t > self.max_depth:
-                    self.max_depth = t
+                if t > max_depth:
+                    max_depth = t
 
             visited_states.add((player, state))
 
@@ -153,7 +156,7 @@ class UCT(ai.AI):
             S = stats[(player, state)]
             S.visits += 1
             S.value += end_values[player]
-        return stats
+        return max_depth
 
 class UCTWins(UCT):
     action_template = "{action}: {percent:.2f}% ({wins} / {plays})"

@@ -55,8 +55,8 @@ class UCT(ai.AI):
 
         games = 0
         # @TODO multithreading here
-        pool = ThreadPool()
-        result = pool.map(self.simulation_thread, list(range(2)))
+        pool = ThreadPool(4)
+        result = pool.map(self.simulation_thread, list(range(4)))
         for stats, game_times in result:
             # @DEBUG
             print 'games:', game_times

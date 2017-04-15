@@ -57,7 +57,7 @@ class UCT(ai.AI):
         games = 0
         # @TODO multithreading here
         queue = Queue()
-        processes_num = 9
+        processes_num = 1
         processes = []
         result = []
         for i in range(processes_num):
@@ -105,7 +105,7 @@ class UCT(ai.AI):
         for key in voting.keys():  # @DEBUG
             if voting[key]['votes'] == 0:
                 continue
-            print 'action:', self.board.unpack_action(key), 'votes:', voting[key]['votes'], 'average: {0:.2f}%'.format(100 * voting[key]['wins'] / voting[key]['visits']), '({0}/{1})'.format(voting[key]['wins'], voting[key]['visits'])
+            print 'action: {0}, votes: {1}, average: {2:.1f}% ({3}/{4})'.format(self.board.unpack_action(key), voting[key]['votes'], 100 * voting[key]['wins'] / voting[key]['visits'], voting[key]['wins'], voting[key]['visits'])
 
         # Display the number of calls of `run_simulation` and the
         # time elapsed.
@@ -130,8 +130,9 @@ class UCT(ai.AI):
         games = 0
         begin = time.time()
         stats = {}
+        max_depth = 0
         while time.time() - begin < self.calculation_time:
-            max_depth = self.run_simulation(stats)
+            max_depth = max(self.run_simulation(stats), max_depth)
             games += 1
         queue.put([stats, games, max_depth])
         return

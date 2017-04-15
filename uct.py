@@ -60,7 +60,7 @@ class UCT(ai.AI):
         threads = []
         result = []
         for i in range(threads_num):
-            t = threading.Thread(target=simulation_thread, arg = (queue))
+            t = threading.Thread(target=self.simulation_thread, arg = (queue))
             threads.append(t)
             t.start()
 

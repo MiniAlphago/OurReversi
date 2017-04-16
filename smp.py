@@ -57,7 +57,7 @@ class UCT(ai.AI):
         games = 0
         # @TODO multithreading here
         queue = Queue()
-        processes_num = 2
+        processes_num = 11
         processes = []
         result = []
         for i in range(processes_num):
@@ -111,16 +111,17 @@ class UCT(ai.AI):
             #     S = self.stats.setdefault(key, Stat())
             #     S.value += stats[key].value
             #     S.visits += stats[key].visits
-        for key in voting.keys():  # @DEBUG
+        for key in voting.keys():
             if voting[key]['votes'] == 0:
+                del voting[key]  # a bad move
                 continue
-            print 'action: {0}, votes: {1}, average: {2:.1f}% ({3}/{4})'.format(self.board.unpack_action(key), voting[key]['votes'], 100 * voting[key]['wins'] / voting[key]['visits'], voting[key]['wins'], voting[key]['visits'])
+            print 'action: {0}, votes: {1}, average: {2:.1f}% ({3}/{4})'.format(self.board.unpack_action(key), voting[key]['votes'], 100 * voting[key]['wins'] / voting[key]['visits'], voting[key]['wins'], voting[key]['visits'])  # @DEBUG
 
         # Display the number of calls of `run_simulation` and the
         # time elapsed.
         self.data.update(games=games, max_depth=self.max_depth,
                          time=str(time.time() - begin))
-        print self.data['games'], self.data['time']
+        print 'games: {0}, time ellapsed: {1:.2f}'.format(self.data['games'], self.data['time'])
         print "Maximum depth searched:", self.max_depth
 
         # Store and display the stats for each possible action.

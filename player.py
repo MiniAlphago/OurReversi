@@ -41,6 +41,9 @@ class Client(object):
     def run(self):
         self.socket = socket.create_connection((self.addr, self.port))
         self.running = True
+        self.begintime = time.time()
+        self.white_time = 0
+        self.black_time = 0
 
         # @ST create the show gui thread
         if self.use_gui:
@@ -92,19 +95,32 @@ class Client(object):
     def handle_update(self, data):
         state = data['state']
         action = data.get('last_action', {}).get('notation') or ''
+   
         self.player.update(state)
-
+       
         print self.player.display(state, action)
         if self.use_gui:
             self.player.status_text_mutex.acquire()
-            self.player.status_text = '{0}\'s Turn'.format(players_name[data['state']['player'] - 1])
+            usedtime = time.time() - self.begintime
+            self.player.status_text = '{0}\'s Turn, '.format(players_name[data['state']['player'] - 1])+ \
+            '{0}s '. format(int(usedtime))+ \
+            'Bt: {0}s '.format(int(self.black_time))+ \
+            'Wt: {0}s'.format(int(self.white_time))
+
+            if players_name[data['state']['player'] - 1] == 'White':
+                self.black_time += usedtime
+            else:
+                self.white_time += usedtime
+            self.begintime = time.time()
             self.player.status_text_mutex.release()
 
         if data.get('winners') is not None:
             print self.player.winner_message(data['winners'])
             if self.use_gui:
                 self.player.status_text_mutex.acquire()
-                self.player.status_text = self.player.winner_message(data['winners'])
+                self.player.status_text = self.player.winner_message(data['winners'])+ \
+                'Bt: {0}s, '.format(int(self.black_time))+ \
+                'Wt: {0}s'.format(int(self.white_time))
                 self.player.status_text_mutex.release()
             self.running = False
         elif data['state']['player'] == self.player.player:
@@ -172,7 +188,7 @@ class HumanPlayer(object):
     def show_gui(self):
         FPS = 60
         clock = pygame.time.Clock()
-        window     = widget.Window(1200, 800, 'Welcome to Reversi AI', 'resources/images/background_100x100.png')
+        window     = widget.Window(1500, 800, 'Welcome to Reversi AI', 'resources/images/background_100x100.png')
         keyboard   = widget.Keyboard()
         board_widget = widget.Board(window, 2, [0], players_name, 8, 8, 1, ('resources/images/black_82x82.png',         \
                           'resources/images/white_82x82.png', 'resources/images/board_82x82_b1.png'),                \

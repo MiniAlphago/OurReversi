@@ -26,7 +26,7 @@ class UCT(object):
         time = 55    # should be 1 min but in case that time is over
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
-        self.max_actions = int(kwargs.get('max_actions', 1000))
+        self.max_actions = int(kwargs.get('max_actions', 64))
 
         # Exploration constant, increase for more exploratory actions,
         # decrease to prefer actions with known higher win rates.

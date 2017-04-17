@@ -73,7 +73,18 @@ class Client(object):
             messages = raw_message.rstrip().split('\r\n')
             if self.use_gui:
                 self.player.status_text_mutex.acquire()
-                self.player.status_text = '{0}\'s Turn'.format(players_name[self.player.player - 1])
+                #self.player.status_text = '{0}\'s Turn'.format(players_name[self.player.player - 1])
+                usedtime = time.time() - self.begintime
+                self.player.status_text = '{0}\'s Turn, '.format(players_name[self.player.player - 1])+ \
+                '{0}s '. format(int(usedtime))+ \
+                'Bt: {0}s '.format(int(self.black_time))+ \
+                'Wt: {0}s'.format(int(self.white_time))
+
+                if self.player.player == 2:
+                    self.black_time += usedtime
+                else:
+                    self.white_time += usedtime
+                self.begintime = time.time()
                 self.player.status_text_mutex.release()
 
             for message in messages:
@@ -121,12 +132,12 @@ class Client(object):
         if self.use_gui:
             self.player.status_text_mutex.acquire()
             usedtime = time.time() - self.begintime
-            self.player.status_text = '{0}\'s Turn, '.format(players_name[data['state']['player'] - 1])+ \
+            self.player.status_text = '{0}\'s Turn, '.format(players_name[2 - self.player.player])+ \
             '{0}s '. format(int(usedtime))+ \
             'Bt: {0}s '.format(int(self.black_time))+ \
             'Wt: {0}s'.format(int(self.white_time))
 
-            if players_name[data['state']['player'] - 1] == 'White':
+            if self.player.player == 2:
                 self.black_time += usedtime
             else:
                 self.white_time += usedtime
@@ -269,7 +280,18 @@ class Client(object):
 
         if self.use_gui:
             self.player.status_text_mutex.acquire()
-            self.player.status_text = '{0}\'s Turn'.format(players_name[2 - self.player.player])
+            #self.player.status_text = '{0}\'s Turn'.format(players_name[2 - self.player.player])
+            usedtime = time.time() - self.begintime
+            self.player.status_text = '{0}\'s Turn, '.format(players_name[2 - self.player.player])+ \
+            '{0}s '. format(int(usedtime))+ \
+            'Bt: {0}s '.format(int(self.black_time))+ \
+            'Wt: {0}s'.format(int(self.white_time))
+
+            if self.player.player == 2:
+                self.black_time += usedtime
+            else:
+                self.white_time += usedtime
+            self.begintime = time.time()
             self.player.status_text_mutex.release()
 
         if self.player.board.is_ended(history_copy):

@@ -21,7 +21,7 @@ class UCT(ai.AI):
 
         self.max_depth = 0
         self.data = {}
-	    self.totalgames=0
+        self.totalgames=0
         self.calculation_time = float(kwargs.get('time', 30))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
 
@@ -52,7 +52,7 @@ class UCT(ai.AI):
         while (time.time() - begin < self.calculation_time) and self.max_depth<(10+int(self.totalgames/5000)):
             self.run_simulation()
             games += 1
-	    self.totalgames +=games
+        self.totalgames +=games
         # Display the number of calls of `run_simulation` and the
         # time elapsed.
         self.data.update(games=games, max_depth=self.max_depth,
@@ -98,16 +98,16 @@ class UCT(ai.AI):
             else:
                 # Otherwise, just make an arbitrary decision.
                 #action, state = choice(actions_states)
-		if(len(actions_states)==0 or len(actions_states)==1 or len(actions_states)==2):
-	    	    action, state = choice(actions_states)
-		else:
-		    result=[]
-		    result=evaluation(actions_states)
-		# result = self.evaluation(actions_states)
+                if(len(actions_states)==0 or len(actions_states)==1 or len(actions_states)==2):
+                    	    action, state = choice(actions_states)
+                else:
+                    result=[]
+                    result=evaluation(actions_states)
+                # result = self.evaluation(actions_states)
                     action, state = choice(result)
-		# for test
-		# print action
-		# print state
+                # for test
+                # print action
+                # print state
 
             history_copy.append(state)
 
@@ -138,21 +138,21 @@ def evaluation(actions_states):
     results=[]
     evalu={}
     for p,S in actions_states:
-	evalu[(p,S)]=0
-	if(p[0]==2 or p[0]==5):
-	    evalu[(p,S)]+=1
-	if(p[1]==2 or p[1]==5):
-	    evalu[(p,S)]+=1
-	if(p[0]==0 or p[0]==7):
-	    evalu[(p,S)]+=2
-	if(p[1]==0 or p[1]==7):
-	    evalu[(p,S)]+=2
-    T = sorted(evalu.items(),key=lambda item:item[1],reverse=True)
+        evalu[(p,S)]=0
+        if(p[0]==2 or p[0]==5):
+            evalu[(p,S)]+=1
+        if(p[1]==2 or p[1]==5):
+            evalu[(p,S)]+=1
+        if(p[0]==0 or p[0]==7):
+            evalu[(p,S)]+=2
+        if(p[1]==0 or p[1]==7):
+            evalu[(p,S)]+=2
+        T = sorted(evalu.items(),key=lambda item:item[1],reverse=True)
 
     for t in range(len(T)):
-	results.append(T[t][0])
-	#result = [(p,S) for i in T[i][0]]
-	#print results
+        results.append(T[t][0])
+    #result = [(p,S) for i in T[i][0]]
+    #print results
     return results[0:3]
 
 
@@ -164,13 +164,13 @@ class UCTWins(UCT):
         self.end_values = board.win_values
 
     def calculate_action_values(self, state, player, legal):
-	    result=[]
+        result=[]
 
         actions_states = [(p, self.board.next_state(state, p)) for p in legal]
-	    if len(actions_states)<3:
-	        result = actions_states
-	    else:
-	        result = evaluation(actions_states)
+        if len(actions_states)<3:
+            result = actions_states
+        else:
+            result = evaluation(actions_states)
         return sorted(
             ({'action': p,
               'percent': 100 * self.stats[(player, S)].value / self.stats[(player, S)].visits,

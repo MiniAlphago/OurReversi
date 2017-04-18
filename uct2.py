@@ -21,7 +21,7 @@ class UCT(ai.AI):
 
         self.max_depth = 0
         self.data = {}
-	self.totalgames=0
+	    self.totalgames=0
         self.calculation_time = float(kwargs.get('time', 30))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
 
@@ -52,7 +52,7 @@ class UCT(ai.AI):
         while (time.time() - begin < self.calculation_time) and self.max_depth<(10+int(self.totalgames/5000)):
             self.run_simulation()
             games += 1
-	self.totalgames +=games
+	    self.totalgames +=games
         # Display the number of calls of `run_simulation` and the
         # time elapsed.
         self.data.update(games=games, max_depth=self.max_depth,
@@ -164,13 +164,13 @@ class UCTWins(UCT):
         self.end_values = board.win_values
 
     def calculate_action_values(self, state, player, legal):
-	result=[]
+	    result=[]
 
         actions_states = [(p, self.board.next_state(state, p)) for p in legal]
-	if len(actions_states)<3:
-	    result = actions_states
-	else:
-	    result = evaluation(actions_states)
+	    if len(actions_states)<3:
+	        result = actions_states
+	    else:
+	        result = evaluation(actions_states)
         return sorted(
             ({'action': p,
               'percent': 100 * self.stats[(player, S)].value / self.stats[(player, S)].visits,

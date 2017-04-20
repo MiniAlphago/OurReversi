@@ -116,7 +116,7 @@ class UCT(object):
                     action, state = choice(actions_states)
                 else:
 		    result=[]
-		    result=evaluation(actions_states)
+		    result=evaluation(actions_states,state)
 		# result = self.evaluation(actions_states)
                     action, state = choice(result)
 		# for test
@@ -148,10 +148,10 @@ class UCT(object):
             S.visits += 1
             S.value += end_values[player]
      
-def evaluation(actions_states):
+def evaluation(actions_states,state):
     #evaluation contains 3 parts
     WEIGHTS = \
-    [-3, -7, 11, -4, 8, 1, 2]
+    [-5, -7, 8, -4, 4, 2, 4]
     P_RINGS = [0x4281001818008142,
                0x42000000004200,
                0x2400810000810024,
@@ -171,9 +171,9 @@ def evaluation(actions_states):
         #stability
         mine_stab=0
         opp_stab=0
-        p1_placed, p2_placed, previous, player = S
-        mine = p1_placed if player == 2 else p2_placed
-        opp = p2_placed if player == 2 else p1_placed
+        p1_placed, p2_placed, previous, player = state
+        mine = p1_placed if player == 1 else p2_placed
+        opp = p2_placed if player == 1 else p1_placed
 
 	m0 = mine & BIT[0] != 0
         m1 = mine & BIT[7] != 0
@@ -197,14 +197,14 @@ def evaluation(actions_states):
             mine_stab += (mine & BIT[62] != 0) + (mine & BIT[54] != 0) + (mine & BIT[55] != 0)
             opp_stab  += (opp  & BIT[62] != 0) + (opp  & BIT[54] != 0) + (opp  & BIT[55] != 0)
 
-        scoreunstable = - 30.0 * (mine_stab - opp_stab)
+        scoreunstable = - 40.0 * (mine_stab - opp_stab)
 
         # piece difference
         mpiece = (m0 + m1 + m2 + m3) * 100.0
         for i in range(len(WEIGHTS)):
             mpiece += WEIGHTS[i] * count_bit(mine & P_RINGS[i])
+
         opiece = (o0 + o1 + o2 + o3) * 100.0
-        
         for i in range(len(WEIGHTS)):
             opiece += WEIGHTS[i] * count_bit(opp  & P_RINGS[i])
         
@@ -278,7 +278,7 @@ class UCTWins(UCT):
         if len(actions_states)<3:
 	    result = actions_states
         else:
-	    result = evaluation(actions_states)
+	    result = evaluation(actions_states,self.history[-1])
         return sorted(
             ({'action': p,
               'percent': 100 * self.stats[(player, S)].value / self.stats[(player, S)].visits,

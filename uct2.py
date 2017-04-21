@@ -153,7 +153,7 @@ def evaluation(actions_states):
     BIT = [1 << n for n in range(64)]
     for p,S in actions_states:
         evalu[(p,S)]=0
-        
+
         #stability
         mine_stab=0
         opp_stab=0
@@ -190,13 +190,13 @@ def evaluation(actions_states):
         for i in range(len(WEIGHTS)):
             mpiece += WEIGHTS[i] * count_bit(mine & P_RINGS[i])
         opiece = (o0 + o1 + o2 + o3) * 150.0
-        
+
         for i in range(len(WEIGHTS)):
             opiece += WEIGHTS[i] * count_bit(opp  & P_RINGS[i])
-        
+
         scorepiece = mpiece - opiece
 
-        # mobility@Why only white conpute the mob value  
+        # mobility@Why only white conpute the mob value
         mmob = count_bit(move_gen(mine, opp))
         scoremob = 20 * mmob
 
@@ -210,21 +210,21 @@ def evaluation(actions_states):
         #   evalu[(p,S)]+=2
         #if(p[1]==0 or p[1]==7):
         #   evalu[(p,S)]+=2
-    
+
     T = sorted(evalu.items(),key=lambda item:item[1],reverse=True)
-	
+
     for t in range(len(T)):
-        results.append(T[t][0])  	
+        results.append(T[t][0])
 	#result = [(p,S) for i in T[i][0]]
 	#print results
     return results[0:3]
-	
+
 def count_bit(b):
     FULL_MASK = 0xFFFFFFFFFFFFFFFF
     b -=  (b >> 1) & 0x5555555555555555
     b  = (((b >> 2) & 0x3333333333333333) + (b & 0x3333333333333333))
     b  = ((b >> 4) + b)  & 0x0F0F0F0F0F0F0F0F
-    return ((b * 0x0101010101010101) & FULL_MASK) >> 56     
+    return ((b * 0x0101010101010101) & FULL_MASK) >> 56
 
 
 def move_gen_sub(P, mask, dir):

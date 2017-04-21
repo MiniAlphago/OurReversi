@@ -10,6 +10,7 @@ import ai
 import threading
 from multiprocessing.dummy import Pool as ThreadPool
 from multiprocessing import Process, Queue
+from uct2 import evaluation
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -57,7 +58,7 @@ class UCT(ai.AI):
         games = 0
         # @TODO multithreading here
         queue = Queue()
-        processes_num = 11
+        processes_num = 1
         processes = []
         result = []
         for i in range(processes_num):
@@ -121,7 +122,7 @@ class UCT(ai.AI):
         # time elapsed.
         self.data.update(games=games, max_depth=self.max_depth,
                          time=str(time.time() - begin))
-        print 'games: {0}, time ellapsed: {1:.2f}'.format(self.data['games'], self.data['time'])
+        print 'games: {0}, time ellapsed: {1}'.format(self.data['games'], self.data['time'])
         print "Maximum depth searched:", self.max_depth
 
         # Store and display the stats for each possible action.
@@ -181,7 +182,14 @@ class UCT(ai.AI):
                 )
             else:
                 # Otherwise, just make an arbitrary decision.
-                action, state = choice(actions_states)
+                #action, state = choice(actions_states)
+                if(len(actions_states)<3):
+                    action, state = choice(actions_states)
+                else:
+                    result=[]
+                    result=evaluation(actions_states)
+                # result = self.evaluation(actions_states)
+                    action, state = choice(result)
 
             history_copy.append(state)
 
@@ -219,13 +227,18 @@ class UCTWins(UCT):
         self.end_values = board.win_values
 
     def calculate_action_values(self, state, player, legal, tree):
-        actions_states = ((p, self.board.next_state(state, p)) for p in legal)
+        result=[]
+        actions_states = [(p, self.board.next_state(state, p)) for p in legal]
+        if len(actions_states)<3:
+            result = actions_states
+        else:
+            result = evaluation(actions_states)
         return sorted(
             ({'action': p,
               'percent': 100 * tree[(player, S)].value / tree[(player, S)].visits,
               'wins': tree[(player, S)].value,
               'plays': tree[(player, S)].visits}
-             for p, S in actions_states),
+             for p, S in result),
             key=lambda x: (x['percent'], x['plays']),
             reverse=True
         )

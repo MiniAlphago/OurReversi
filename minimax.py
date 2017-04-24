@@ -1,6 +1,8 @@
 import sys
 import ai
 
+max_depth = 5
+
 class MiniMax(ai.AI):
     def __init__(self, board, **kwargs):
         super(MiniMax, self).__init__(board, **kwargs)
@@ -12,22 +14,22 @@ class MiniMax(ai.AI):
         # goal: player 1: max, player 2: min
         best_action = None
         if player == 1:
-            value, best_action = self.Max(state, 5, float('-inf'), float('inf'), player)
+            value, best_action = self.Max(state, max_depth, float('-inf'), float('inf'), player)
         else:
-            value, best_action = self.Min(state, 5, float('-inf'), float('inf'), player)
+            value, best_action = self.Min(state, max_depth, float('-inf'), float('inf'), player)
         print 'evaluation : ', value
         return self.board.unpack_action(best_action)
 
     def Max(self, state, depth, alpha, beta, player):
         if depth == 0:
             #return self.board.not_ended_points_values([state])[1], None  # return [point, action]
-            return self.EvaluateState(state) * 1e7, None
+            return self.EvaluateState(state), None
 
         legal = self.board.legal_actions([state])
         if not legal:
             if self.board.is_ended([state]):
                 #best = self.board.not_ended_points_values([state])[1]
-                best = self.EvaluateState(state) * 1e7
+                best = self.EvaluateState(state)
                 #print 'max: time to return', 'best: ', best, 'alpha: ', alpha, 'beta: ', beta# @DEBUG
                 return best, None
             return Min(state, depth, alpha, beta, 3 - player)
@@ -48,13 +50,13 @@ class MiniMax(ai.AI):
     def Min(self, state, depth, alpha, beta, player):
         if depth == 0:
             #return self.board.not_ended_points_values([state])[1], None  # return [point, action]
-            return self.EvaluateState(state) * 1e7, None
+            return self.EvaluateState(state), None
 
         legal = self.board.legal_actions([state])
         if not legal:
             if self.board.is_ended([state]):
                 #best = self.board.not_ended_points_values([state])[1]
-                best = self.EvaluateState(state) * 1e7
+                best = self.EvaluateState(state)
                 #print 'min: time to return', 'best: ', best, 'alpha: ', alpha, 'beta: ', beta# @DEBUG
                 return best, None
             return Max(state, depth, alpha, beta, 3 - player)

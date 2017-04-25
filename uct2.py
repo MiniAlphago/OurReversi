@@ -22,12 +22,12 @@ class UCT(ai.AI):
         self.max_depth = 0
         self.data = {}
         self.totalgames=0
-        self.calculation_time = float(kwargs.get('time', 30))  # @ST @NOTE Here calculation_time should be 1 min
+        self.calculation_time = float(kwargs.get('time', 56))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
 
         # Exploration constant, increase for more exploratory actions,
         # decrease to prefer actions with known higher win rates.
-        self.C = float(kwargs.get('C', 1.4))
+        self.C = float(kwargs.get('C', 1.96))
 
     def get_action(self):
         # Causes the AI to calculate the best action from the
@@ -49,7 +49,7 @@ class UCT(ai.AI):
 
         games = 0
         begin = time.time()
-        while (time.time() - begin < self.calculation_time) and self.max_depth<(10+int(self.totalgames/5000)):
+        while (time.time() - begin < self.calculation_time) and self.max_depth<(15+int(self.totalgames/5000)):
             self.run_simulation()
             games += 1
         self.totalgames +=games
@@ -137,7 +137,7 @@ class UCT(ai.AI):
 def evaluation(actions_states):
     #evaluation contains 3 parts
     WEIGHTS = \
-    [-7, -7, 13, -8, 8, -3, 4]
+    [-3, -9, 13, -13, 9, -3, 9]
     P_RINGS = [0x4281001818008142,
                0x42000000004200,
                0x2400810000810024,
@@ -186,10 +186,10 @@ def evaluation(actions_states):
         scoreunstable = - 30.0 * (mine_stab - opp_stab)
 
         # piece difference
-        mpiece = (m0 + m1 + m2 + m3) * 150.0
+        mpiece = (m0 + m1 + m2 + m3) * 100.0
         for i in range(len(WEIGHTS)):
             mpiece += WEIGHTS[i] * count_bit(mine & P_RINGS[i])
-        opiece = (o0 + o1 + o2 + o3) * 150.0
+        opiece = (o0 + o1 + o2 + o3) * 100.0
         
         for i in range(len(WEIGHTS)):
             opiece += WEIGHTS[i] * count_bit(opp  & P_RINGS[i])

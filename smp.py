@@ -10,6 +10,8 @@ import ai
 import threading
 from multiprocessing.dummy import Pool as ThreadPool
 from multiprocessing import Process, Queue
+import minimax
+import reversi
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -17,6 +19,7 @@ class Stat(object):
     def __init__(self, value=0, visits=0):
         self.value = value
         self.visits = visits
+
 
 class UCT(ai.AI):
     def __init__(self, board, **kwargs):
@@ -33,6 +36,10 @@ class UCT(ai.AI):
         # Exploration constant, increase for more exploratory actions,
         # decrease to prefer actions with known higher win rates.
         self.C = float(kwargs.get('C', 1.96)) #Original1.4
+
+        self.plugged_in_minimax = minimax.MiniMax(reversi.Board)
+        self.max_depth = 5
+
 
     def get_action(self):
 
@@ -57,7 +64,7 @@ class UCT(ai.AI):
         games = 0
         # @TODO multithreading here
         queue = Queue()
-        processes_num = 11
+        processes_num = 9
         processes = []
         result = []
         for i in range(processes_num):
@@ -182,6 +189,14 @@ class UCT(ai.AI):
             else:
                 # Otherwise, just make an arbitrary decision.
                 action, state = choice(actions_states)
+                if player == 1:
+                    value, best_action = self.plugged_in_minimax.Max(state, self.max_depth, float('-inf'), float('inf'), player)
+                else:
+                    value, best_action = self.plugged_in_minimax.Min(state, self.max_depth, float('-inf'), float('inf'), player)
+                for p, s in actions_states:
+                    if p == best_action:
+                        action, state = p, s
+                        break
 
             history_copy.append(state)
 

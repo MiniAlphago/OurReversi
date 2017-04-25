@@ -37,8 +37,8 @@ class UCT(ai.AI):
         # decrease to prefer actions with known higher win rates.
         self.C = float(kwargs.get('C', 1.96)) #Original1.4
 
-        self.plugged_in_minimax = minimax.MiniMax(reversi.Board)
-        self.max_depth = 5
+        self.plugged_in_minimax = minimax.MiniMax(reversi.Board())
+        self.minimax_max_depth = 1
 
 
     def get_action(self):
@@ -64,7 +64,7 @@ class UCT(ai.AI):
         games = 0
         # @TODO multithreading here
         queue = Queue()
-        processes_num = 9
+        processes_num = 1
         processes = []
         result = []
         for i in range(processes_num):
@@ -192,9 +192,9 @@ class UCT(ai.AI):
                 action, state = choice(actions_states)
                 if player != you:
                     if player == 1:
-                        value, best_action = self.plugged_in_minimax.Max(state, self.max_depth, float('-inf'), float('inf'), player)
+                        value, best_action = self.plugged_in_minimax.Max(state, self.minimax_max_depth, float('-inf'), float('inf'), player)
                     else:
-                        value, best_action = self.plugged_in_minimax.Min(state, self.max_depth, float('-inf'), float('inf'), player)
+                        value, best_action = self.plugged_in_minimax.Min(state, self.minimax_max_depth, float('-inf'), float('inf'), player)
                     for p, s in actions_states:
                         if p == best_action:
                             action, state = p, s

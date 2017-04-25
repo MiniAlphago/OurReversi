@@ -189,17 +189,17 @@ class UCT(ai.AI):
                 )
             else:
                 # Otherwise, just make an arbitrary decision.
-                action, state = choice(actions_states)
-                if player != you:
-                    if player == 1:
-                        value, best_action = self.plugged_in_minimax.Max(state, self.minimax_max_depth, float('-inf'), float('inf'), player)
-                    else:
-                        value, best_action = self.plugged_in_minimax.Min(state, self.minimax_max_depth, float('-inf'), float('inf'), player)
-                    for p, s in actions_states:
-                        if p == best_action:
-                            action, state = p, s
-                            break
-
+                action, state = choice(actions_states)  # @BUG
+                # if player != you:
+                #     if player == 1:
+                #         value, best_action = self.plugged_in_minimax.Max(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
+                #     else:
+                #         value, best_action = self.plugged_in_minimax.Min(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
+                #     for p, s in actions_states:
+                #         if p == best_action:
+                #             action, state = p, s
+                #             break
+                #
             history_copy.append(state)
 
             # Expand

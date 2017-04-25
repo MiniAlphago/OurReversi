@@ -169,6 +169,7 @@ class UCT(ai.AI):
         history_copy = self.history[:]
         state = history_copy[-1]
         player = self.board.current_player(state)
+        you = player
 
         expand = True
 
@@ -189,14 +190,15 @@ class UCT(ai.AI):
             else:
                 # Otherwise, just make an arbitrary decision.
                 action, state = choice(actions_states)
-                if player == 1:
-                    value, best_action = self.plugged_in_minimax.Max(state, self.max_depth, float('-inf'), float('inf'), player)
-                else:
-                    value, best_action = self.plugged_in_minimax.Min(state, self.max_depth, float('-inf'), float('inf'), player)
-                for p, s in actions_states:
-                    if p == best_action:
-                        action, state = p, s
-                        break
+                if player != you:
+                    if player == 1:
+                        value, best_action = self.plugged_in_minimax.Max(state, self.max_depth, float('-inf'), float('inf'), player)
+                    else:
+                        value, best_action = self.plugged_in_minimax.Min(state, self.max_depth, float('-inf'), float('inf'), player)
+                    for p, s in actions_states:
+                        if p == best_action:
+                            action, state = p, s
+                            break
 
             history_copy.append(state)
 

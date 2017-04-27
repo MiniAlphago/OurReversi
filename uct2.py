@@ -22,7 +22,7 @@ class UCT(ai.AI):
         self.max_depth = 0
         self.data = {}
         self.totalgames=0
-        self.calculation_time = float(kwargs.get('time', 56))  # @ST @NOTE Here calculation_time should be 1 min
+        self.calculation_time = float(kwargs.get('time',58))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
 
         # Exploration constant, increase for more exploratory actions,
@@ -54,7 +54,7 @@ class UCT(ai.AI):
             games += 1
         self.totalgames +=games
         # Display the number of calls of `run_simulation` and the
-        # time elapsed.
+        # time elapsed.s
         self.data.update(games=games, max_depth=self.max_depth,
                          time=str(time.time() - begin))
         print self.data['games'], self.data['time']
@@ -102,7 +102,8 @@ class UCT(ai.AI):
                     action, state = choice(actions_states)
                 else:
                     result=[]
-                    result=evaluation(actions_states)
+                    score = []
+                    result,score=evaluation(actions_states)
                 # result = self.evaluation(actions_states)
                     action, state = choice(result)
                 # for test
@@ -137,7 +138,7 @@ class UCT(ai.AI):
 def evaluation(actions_states):
     #evaluation contains 3 parts
     WEIGHTS = \
-    [-3, -9, 13, -13, 9, -3, 9]
+    [-7, -15, 40, -15, 30, -6, 20]
     P_RINGS = [0x4281001818008142,
                0x42000000004200,
                0x2400810000810024,
@@ -149,6 +150,7 @@ def evaluation(actions_states):
     P_SUB_CORNER = 0x42C300000000C342
     FULL_MASK = 0xFFFFFFFFFFFFFFFF
     results=[]
+    score = []
     evalu={}
     BIT = [1 << n for n in range(64)]
     for p,S in actions_states:
@@ -217,7 +219,12 @@ def evaluation(actions_states):
         results.append(T[t][0])  	
 	#result = [(p,S) for i in T[i][0]]
 	#print results
-    return results[0:3]
+        score.append(T[t][1]) 
+    #print T[1][1]
+    if(T[1][1]!=0 and ((T[0][1]-T[1][1])/abs(T[1][1]))>0.3):
+        return results[0:1],score[0:1]
+    else:
+        return results[0:3],score[0:3]
 	
 def count_bit(b):
     FULL_MASK = 0xFFFFFFFFFFFFFFFF
@@ -261,12 +268,16 @@ class UCTWins(UCT):
 
     def calculate_action_values(self, state, player, legal):
         result=[]
-
+        score = []
         actions_states = [(p, self.board.next_state(state, p)) for p in legal]
         if len(actions_states)<3:
             result = actions_states
+            score = [0]
         else:
-            result = evaluation(actions_states)
+            result ,score= evaluation(actions_states)
+        for t in range(len(score)):
+	    print result[t]
+            print score[t]
         return sorted(
             ({'action': p,
               'percent': 100 * self.stats[(player, S)].value / self.stats[(player, S)].visits,

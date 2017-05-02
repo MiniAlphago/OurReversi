@@ -61,18 +61,19 @@ cdef class Board(object):
     def legal_actions(self, history):
         ## Kogge-Stone algorithm
         p1_placed, p2_placed, previous, player = history[-1]
-        occupied = p1_placed | p2_placed
-        empty = 0xffffffffffffffff ^ occupied
+        cdef unsigned long occupied = p1_placed | p2_placed
+        cdef unsigned long empty = 0xffffffffffffffff ^ occupied
 
-        mask_a = 0xfefefefefefefefe
-        mask_h = 0x7f7f7f7f7f7f7f7f
+        cdef unsigned long mask_a = 0xfefefefefefefefe
+        cdef unsigned long mask_h = 0x7f7f7f7f7f7f7f7f
 
-        mine = p1_placed if player == 1 else p2_placed
-        opp = p2_placed if player == 1 else p1_placed
-        legal = 0
+        cdef unsigned long mine = p1_placed if player == 1 else p2_placed
+        cdef unsigned long opp = p2_placed if player == 1 else p1_placed
+        cdef unsigned long legal = 0
 
         # N
-        g, p = mine, opp
+        cdef unsigned long g = mine
+        cdef unsigned long p = opp
         g |= p & (g >> 8)
         p &= (p >> 8)
         g |= p & (g >> 16)
@@ -252,21 +253,22 @@ cdef class Board(object):
         return 'abcdefgh'[c] + str(r+1)
 
     def next_state(self, state, action):
-        P = self.positions[action]
+        cdef unsigned long P = self.positions[action]
         p1_placed, p2_placed, previous, player = state
 
-        occupied = p1_placed | p2_placed
-        empty = 0xffffffffffffffff ^ occupied
+        cdef unsigned long occupied = p1_placed | p2_placed
+        cdef unsigned long empty = 0xffffffffffffffff ^ occupied
 
-        mask_a = 0xfefefefefefefefe
-        mask_h = 0x7f7f7f7f7f7f7f7f
+        cdef unsigned long mask_a = 0xfefefefefefefefe
+        cdef unsigned long mask_h = 0x7f7f7f7f7f7f7f7f
 
-        mine = p1_placed if player == 1 else p2_placed
-        opp = p2_placed if player == 1 else p1_placed
-        flips = 0
+        cdef unsigned long mine = p1_placed if player == 1 else p2_placed
+        cdef unsigned long opp = p2_placed if player == 1 else p1_placed
+        cdef unsigned long flips = 0
 
         # N
-        g, p = P, opp
+        cdef unsigned long g= P
+        cdef unsigned long p = opp
         g |= p & (g >> 8)
         p &= (p >> 8)
         g |= p & (g >> 16)

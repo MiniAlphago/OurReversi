@@ -4,7 +4,7 @@
 import re
 import string
 
-class Board(object):
+cdef class Board(object):
     num_players = 2
     rows = cols = 8
 

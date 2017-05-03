@@ -6,7 +6,7 @@ import time
 from math import log, sqrt
 from random import choice
 import ai
-from eval import evaluation
+import eval
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -104,8 +104,8 @@ class UCT(ai.AI):
                 else:
                     result=[]
                     score = []
-                    result,score=evaluation(actions_states)
-                # result = self.evaluation(actions_states)
+                    result,score=eval.evaluation(actions_states)
+                # result = self.eval.evaluation(actions_states)
                     action, state = choice(result)
                 # for test
                 # print action
@@ -151,7 +151,7 @@ class UCTWins(UCT):
             result = actions_states
             score = [0]
         else:
-            result ,score= evaluation(actions_states)
+            result ,score= eval.evaluation(actions_states)
         for t in range(len(score)):
 	    print result[t]
             print score[t]

@@ -9,13 +9,36 @@ def evaluation(actions_states):
                0x1800008181000018,
                0x18004242001800,
                0x3C24243C0000]
-    P_CORNER = 0x8100000000000081
-    P_SUB_CORNER = 0x42C300000000C342
-    FULL_MASK = 0xFFFFFFFFFFFFFFFF
+    cdef unsigned long P_CORNER = 0x8100000000000081
+    cdef unsigned long P_SUB_CORNER = 0x42C300000000C342
+    cdef unsigned long FULL_MASK = 0xFFFFFFFFFFFFFFFF
     results=[]
     score = []
     evalu={}
     BIT = [1 << n for n in range(64)]
+
+    cdef unsigned long mine_stab=0
+    cdef unsigned long opp_stab=0
+    cdef unsigned long mine = 0
+    cdef unsigned long opp = 0
+
+
+    cdef unsigned long m0 = 0
+    cdef unsigned long m1 = 0
+    cdef unsigned long m2 = 0
+    cdef unsigned long m3 = 0
+    cdef unsigned long o0 = 0
+    cdef unsigned long o1 = 0
+    cdef unsigned long o2 = 0
+    cdef unsigned long o3 = 0
+    cdef double scoreunstable = 0
+    cdef double mpiece = 0
+    cdef double opiece = 0
+    cdef double scorepiece = 0
+    cdef long mmob = 0
+    cdef long scoremob = 0
+
+
     for p,S in actions_states:
         evalu[(p,S)]=0
 
@@ -26,7 +49,7 @@ def evaluation(actions_states):
         mine = p1_placed if player == 2 else p2_placed
         opp = p2_placed if player == 2 else p1_placed
 
-	m0 = mine & BIT[0] != 0
+        m0 = mine & BIT[0] != 0
         m1 = mine & BIT[7] != 0
         m2 = mine & BIT[56] != 0
         m3 = mine & BIT[63] != 0
@@ -70,8 +93,8 @@ def evaluation(actions_states):
        #if(p[0]==2 or p[0]==5):
     #   evalu[(p,S)]+=1
        #if(p[1]==2 or p[1]==5):
-	 #   evalu[(p,S)]+=1
-	#if(p[0]==0 or p[0]==7):
+     #   evalu[(p,S)]+=1
+    #if(p[0]==0 or p[0]==7):
         #   evalu[(p,S)]+=2
         #if(p[1]==0 or p[1]==7):
         #   evalu[(p,S)]+=2
@@ -80,12 +103,12 @@ def evaluation(actions_states):
 
     for t in range(len(T)):
         results.append(T[t][0])
-	#result = [(p,S) for i in T[i][0]]
-	#print results
+    #result = [(p,S) for i in T[i][0]]
+    #print results
         score.append(T[t][1])
-    #print T[1][1]
-    t1 = T[1][1]
-    t2 = T[2][1]
+    print T[1][1], T[2][1]
+    cdef long t1 = T[1][1]
+    cdef long t2 = T[2][1]
     if(t1==0):
         t1=1
     if(t2==0):
@@ -99,8 +122,8 @@ def evaluation(actions_states):
         else:
             return results[0:3],score[0:3]
 
-def count_bit(b):
-    FULL_MASK = 0xFFFFFFFFFFFFFFFF
+def count_bit(unsigned long b):
+    cdef unsigned long FULL_MASK = 0xFFFFFFFFFFFFFFFF
     b -=  (b >> 1) & 0x5555555555555555
     b  = (((b >> 2) & 0x3333333333333333) + (b & 0x3333333333333333))
     b  = ((b >> 4) + b)  & 0x0F0F0F0F0F0F0F0F
@@ -108,13 +131,13 @@ def count_bit(b):
 
 
 def move_gen_sub(P, mask, dir):
-    dir2 = long(dir * 2)
-    flip1  = mask & (P << dir)
-    flip2  = mask & (P >> dir)
+    cdef unsigned long dir2 = long(dir * 2)
+    cdef unsigned long flip1  = mask & (P << dir)
+    cdef unsigned long flip2  = mask & (P >> dir)
     flip1 |= mask & (flip1 << dir)
     flip2 |= mask & (flip2 >> dir)
-    mask1  = mask & (mask << dir)
-    mask2  = mask & (mask >> dir)
+    cdef unsigned long mask1  = mask & (mask << dir)
+    cdef unsigned long mask2  = mask & (mask >> dir)
     flip1 |= mask1 & (flip1 << dir2)
     flip2 |= mask2 & (flip2 >> dir2)
     flip1 |= mask1 & (flip1 << dir2)
@@ -122,8 +145,8 @@ def move_gen_sub(P, mask, dir):
     return (flip1 << dir) | (flip2 >> dir)
 
 def move_gen(P, O):
-    FULL_MASK = 0xFFFFFFFFFFFFFFFF
-    mask = O & 0x7E7E7E7E7E7E7E7E
+    cdef unsigned long FULL_MASK = 0xFFFFFFFFFFFFFFFF
+    cdef unsigned long mask = O & 0x7E7E7E7E7E7E7E7E
     return ((move_gen_sub(P, mask, 1)
             | move_gen_sub(P, O, 8)
             | move_gen_sub(P, mask, 7)

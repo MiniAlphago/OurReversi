@@ -22,7 +22,7 @@ class UCT(ai.AI):
         self.max_depth = 0
         self.data = {}
         self.totalgames=0
-        self.calculation_time = float(kwargs.get('time',58))  # @ST @NOTE Here calculation_time should be 1 min
+        self.calculation_time = float(kwargs.get('time',30))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
 
         # Exploration constant, increase for more exploratory actions,
@@ -138,7 +138,7 @@ class UCT(ai.AI):
 def evaluation(actions_states):
     #evaluation contains 3 parts
     WEIGHTS = \
-    [-7, -15, 40, -15, 30, -6, 20]
+    [-5, -8, 13, -4, 10, -5, 6]
     P_RINGS = [0x4281001818008142,
                0x42000000004200,
                0x2400810000810024,
@@ -221,10 +221,20 @@ def evaluation(actions_states):
 	#print results
         score.append(T[t][1]) 
     #print T[1][1]
-    if(T[1][1]!=0 and ((T[0][1]-T[1][1])/abs(T[1][1]))>0.3):
+    t1 = T[1][1]
+    t2 = T[2][1]
+    if(t1==0):
+        t1=1
+    if(t2==0):
+        t2=1
+    
+    if(((T[0][1]-t1)/abs(t1))>0.25):
         return results[0:1],score[0:1]
     else:
-        return results[0:3],score[0:3]
+        if(((T[0][1]-t2)/abs(t2))>0.35):
+            return results[0:2],score[0:2]
+        else:
+            return results[0:3],score[0:3]
 	
 def count_bit(b):
     FULL_MASK = 0xFFFFFFFFFFFFFFFF

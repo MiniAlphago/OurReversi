@@ -60,7 +60,9 @@ class UCT(ai.AI):
         # time elapsed.
         self.data.update(games=games, max_depth=self.max_depth,
                          time=str(time.time() - begin))
-        print 'games: {0}, time ellapsed: {1:.2f}'.format(self.data['games'], self.data['time'])
+        #print 'games: {0}, time ellapsed: {1:.2f}'.format(self.data['games'], self.data['time'])
+        
+        print self.data['games'], self.data['time']
         print "Maximum depth searched:", self.max_depth
 
         # Store and display the stats for each possible action.

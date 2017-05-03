@@ -209,6 +209,7 @@ class UCT(ai.AI):
             S = stats[(player, state)]
             S.visits += 1
             S.value += end_values[player]
+            print 'S.visits: {0}, S.value: {1}'.format(S.visits, S.value)
         return max_depth
 
 class UCTWins(UCT):

@@ -17,8 +17,8 @@ def evaluation(actions_states):
     evalu={}
     BIT = [1 << n for n in range(64)]
 
-    cdef unsigned long mine_stab=0
-    cdef unsigned long opp_stab=0
+    cdef long mine_stab=0
+    cdef long opp_stab=0
     cdef unsigned long mine = 0
     cdef unsigned long opp = 0
 
@@ -106,7 +106,7 @@ def evaluation(actions_states):
     #result = [(p,S) for i in T[i][0]]
     #print results
         score.append(T[t][1])
-    print T[1][1], T[2][1]
+    #print T[1][1], T[2][1]
     cdef long t1 = T[1][1]
     cdef long t2 = T[2][1]
     if(t1==0):

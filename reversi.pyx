@@ -4,7 +4,7 @@
 import re
 import string
 
-class Board(object):
+cdef class Board(object):
     num_players = 2
     rows = cols = 8
 
@@ -58,21 +58,27 @@ class Board(object):
         actions = set(self.legal_actions(history))
         return action in actions
 
-    def legal_actions(self, history):
+    cpdef legal_actions(self, history):
         ## Kogge-Stone algorithm
-        p1_placed, p2_placed, previous, player = history[-1]
-        occupied = p1_placed | p2_placed
-        empty = 0xffffffffffffffff ^ occupied
+        state = history[-1]
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int previous = state[2]
+        cdef int player = state[3]
 
-        mask_a = 0xfefefefefefefefe
-        mask_h = 0x7f7f7f7f7f7f7f7f
+        cdef unsigned long occupied = p1_placed | p2_placed
+        cdef unsigned long empty = 0xffffffffffffffff ^ occupied
 
-        mine = p1_placed if player == 1 else p2_placed
-        opp = p2_placed if player == 1 else p1_placed
-        legal = 0
+        cdef unsigned long mask_a = 0xfefefefefefefefe
+        cdef unsigned long mask_h = 0x7f7f7f7f7f7f7f7f
+
+        cdef unsigned long mine = p1_placed if player == 1 else p2_placed
+        cdef unsigned long opp = p2_placed if player == 1 else p1_placed
+        cdef unsigned long legal = 0
 
         # N
-        g, p = mine, opp
+        cdef unsigned long g = mine
+        cdef unsigned long p = opp
         g |= p & (g >> 8)
         p &= (p >> 8)
         g |= p & (g >> 16)
@@ -152,17 +158,22 @@ class Board(object):
     def current_player(self, state):
         return state[-1]
 
-    def is_ended(self, history):
+    cpdef is_ended(self, history):
         state = history[-1]
-        p1_placed, p2_placed, previous, player = state
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int previous = state[2]
+        cdef int player = state[3]
+        cdef int rows = self.rows
+        cdef int cols = self.cols
 
         if p2_placed == 0:
             return True
         if p1_placed == 0:
             return True
 
-        occupied = p1_placed | p2_placed
-        return (occupied == (1 << (self.rows * self.cols)) - 1 or
+        cdef unsigned long occupied = p1_placed | p2_placed
+        return (occupied == (1 << (rows * cols)) - 1 or
                 not self.legal_actions([state]))
 
     def win_values(self, history):
@@ -251,22 +262,37 @@ class Board(object):
         r, c = action
         return 'abcdefgh'[c] + str(r+1)
 
-    def next_state(self, state, action):
-        P = self.positions[action]
-        p1_placed, p2_placed, previous, player = state
+    cpdef next_state(self, state, action):
+        cdef unsigned long P = self.positions[action]
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int previous = state[2]
+        cdef int player = state[3]
 
-        occupied = p1_placed | p2_placed
-        empty = 0xffffffffffffffff ^ occupied
 
-        mask_a = 0xfefefefefefefefe
-        mask_h = 0x7f7f7f7f7f7f7f7f
+        cdef unsigned long occupied = p1_placed | p2_placed
+        cdef unsigned long empty = 0xffffffffffffffff ^ occupied
 
-        mine = p1_placed if player == 1 else p2_placed
-        opp = p2_placed if player == 1 else p1_placed
-        flips = 0
+        cdef unsigned long mask_a = 0xfefefefefefefefe
+        cdef unsigned long mask_h = 0x7f7f7f7f7f7f7f7f
+
+        cdef unsigned long mine = 0
+        if player == 1:
+            mine = p1_placed
+        else:
+            mine = p2_placed
+
+        cdef unsigned long opp = 0
+        if player == 1:
+            opp = p2_placed
+        else:
+            opp = p1_placed
+
+        cdef unsigned long flips = 0
 
         # N
-        g, p = P, opp
+        cdef unsigned long g= P
+        cdef unsigned long p = opp
         g |= p & (g >> 8)
         p &= (p >> 8)
         g |= p & (g >> 16)

@@ -38,7 +38,7 @@ class UCT(ai.AI):
         self.C = float(kwargs.get('C', 1.96)) #Original1.4
 
         self.plugged_in_minimax = minimax.MiniMax(reversi.Board())
-        self.minimax_max_depth = 2
+        self.minimax_max_depth = 1
 
 
     def get_action(self):

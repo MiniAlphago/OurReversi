@@ -7,6 +7,8 @@ import time
 from math import log, sqrt
 from random import choice
 import ai
+import minimax
+import reversi
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -22,7 +24,7 @@ class UCT(ai.AI):
 
         self.max_depth = 0
         self.data = {}
-        time = 30    # should be 1 min but in case that time is over
+        time = 3    # should be 1 min but in case that time is over
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
@@ -30,6 +32,9 @@ class UCT(ai.AI):
         # Exploration constant, increase for more exploratory actions,
         # decrease to prefer actions with known higher win rates.
         self.C = float(kwargs.get('C', 1.96)) #Original1.4
+
+        self.plugged_in_minimax = minimax.MiniMax(reversi.Board())
+        self.minimax_max_depth = 2
 
     def get_action(self):
 
@@ -78,6 +83,9 @@ class UCT(ai.AI):
 
         # A bit of an optimization here, so we have a local
         # variable lookup instead of an attribute access each loop. 6
+        discs_num = self.board.count_discs(self.history[-1])
+        max_searching_depth = self.max_actions - discs_num
+        used_minimax_flag = False
 
         stats = self.stats
         visited_states = set()
@@ -86,6 +94,7 @@ class UCT(ai.AI):
         player = self.board.current_player(state)
 
         expand = True
+        called_minimax = 0
 
         # the most important part
         # Use UCB to evaluate the nodes and
@@ -102,8 +111,18 @@ class UCT(ai.AI):
                     for p, S in actions_states
                 )
             else:
+                if max_searching_depth <= t * 2:
+                    used_minimax_flag = True
+                    if player == 1:
+                        best_value, best_action = self.plugged_in_minimax.Max(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
+                    else:
+                        best_value, best_action = self.plugged_in_minimax.Min(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
+                    for p, s in actions_states:
+                        if p == best_action:
+                            action, state = p, s
                 # Otherwise, just make an arbitrary decision.
-                action, state = choice(actions_states)
+                else:
+                    action, state = choice(actions_states)
 
             history_copy.append(state)
 
@@ -119,12 +138,17 @@ class UCT(ai.AI):
             visited_states.add((player, state))
 
             player = self.board.current_player(state)
-            if self.board.is_ended(history_copy):
+            if used_minimax_flag or self.board.is_ended(history_copy):
+                if not used_minimax_flag:
+                    if player == 1:
+                        best_value, best_action = self.plugged_in_minimax.Max(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
+                    else:
+                        best_value, best_action = self.plugged_in_minimax.Min(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
                 break
 
         # Back-propagation
         #
-        end_values = self.end_values(history_copy)
+        end_values = {1: best_value, 2: -best_value}
         for player, state in visited_states:
             if (player, state) not in stats:
                 continue

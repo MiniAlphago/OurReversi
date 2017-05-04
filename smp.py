@@ -31,14 +31,14 @@ class UCT(ai.AI):
         time = 30    # should be 1 min but in case that time is over
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
-        self.max_actions = int(kwargs.get('max_actions', 1000))
+        self.max_actions = int(kwargs.get('max_actions', 64))
 
         # Exploration constant, increase for more exploratory actions,
         # decrease to prefer actions with known higher win rates.
         self.C = float(kwargs.get('C', 1.96)) #Original1.4
 
         self.plugged_in_minimax = minimax.MiniMax(reversi.Board())
-        self.minimax_max_depth = 1
+        self.minimax_max_depth = 2
 
 
     def get_action(self):
@@ -64,7 +64,7 @@ class UCT(ai.AI):
         games = 0
         # @TODO multithreading here
         queue = Queue()
-        processes_num = 1
+        processes_num = 9
         processes = []
         result = []
         for i in range(processes_num):
@@ -148,15 +148,16 @@ class UCT(ai.AI):
         begin = time.time()
         stats = {}
         max_depth = 0
+        discs_num = self.board.count_discs(self.history[-1])
         while time.time() - begin < self.calculation_time:
-            max_depth = max(self.run_simulation(stats), max_depth)
+            max_depth = max(self.run_simulation(stats, discs_num), max_depth)
             games += 1
         queue.put([stats, games, max_depth])
         return
 
 
     # Here we run the simulation
-    def run_simulation(self, stats):
+    def run_simulation(self, stats, discs_num):
         # Plays out a "random" game from the current position,
         # then updates the statistics tables with the result.
 
@@ -165,6 +166,9 @@ class UCT(ai.AI):
 
         #stats = {}
         max_depth = 0
+        max_searching_depth = self.max_actions - discs_num
+        used_minimax_flag = False
+
         visited_states = set()
         history_copy = self.history[:]
         state = history_copy[-1]
@@ -188,18 +192,18 @@ class UCT(ai.AI):
                     for p, S in actions_states
                 )
             else:
+                if max_searching_depth <= t * 2:
+                    used_minimax_flag = True
+                    if player == 1:
+                        best_value, best_action = self.plugged_in_minimax.Max(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
+                    else:
+                        best_value, best_action = self.plugged_in_minimax.Min(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
+                    for p, s in actions_states:
+                        if p == best_action:
+                            action, state = p, s
                 # Otherwise, just make an arbitrary decision.
-                action, state = choice(actions_states)  # @BUG
-                # if player != you:
-                #     if player == 1:
-                #         value, best_action = self.plugged_in_minimax.Max(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
-                #     else:
-                #         value, best_action = self.plugged_in_minimax.Min(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
-                #     for p, s in actions_states:
-                #         if p == best_action:
-                #             action, state = p, s
-                #             break
-                #
+                else:
+                    action, state = choice(actions_states)
             history_copy.append(state)
 
             # Expand
@@ -214,12 +218,18 @@ class UCT(ai.AI):
             visited_states.add((player, state))
 
             player = self.board.current_player(state)
-            if self.board.is_ended(history_copy):
+            if used_minimax_flag or self.board.is_ended(history_copy):
+                if not used_minimax_flag:
+                    if player == 1:
+                        best_value, best_action = self.plugged_in_minimax.Max(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
+                    else:
+                        best_value, best_action = self.plugged_in_minimax.Min(history_copy[-1], self.minimax_max_depth, float('-inf'), float('inf'), player)
                 break
 
         # Back-propagation
         #
-        end_values = self.end_values(history_copy)
+        #end_values = self.end_values(history_copy)
+        end_values = {1: best_value, 2: -best_value}
         for player, state in visited_states:
             if (player, state) not in stats:
                 continue

@@ -205,6 +205,15 @@ cdef class Board(object):
 
         return {1: p1_score, 2: p2_score}
 
+    cpdef count_discs(self, state):
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int count;
+        cdef int p1_score = bin(p1_placed).count('1')
+        cdef int p2_score = bin(p2_placed).count('1')
+        count = p1_score + p2_score
+        return count
+
     def not_ended_points_values(self, history):
         state = history[-1]
         p1_placed, p2_placed, previous, player = state

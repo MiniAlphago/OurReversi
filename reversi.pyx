@@ -58,7 +58,7 @@ cdef class Board(object):
         actions = set(self.legal_actions(history))
         return action in actions
 
-    def legal_actions(self, history):
+    cpdef legal_actions(self, history):
         ## Kogge-Stone algorithm
         state = history[-1]
         cdef unsigned long p1_placed = state[0]
@@ -158,12 +158,14 @@ cdef class Board(object):
     def current_player(self, state):
         return state[-1]
 
-    def is_ended(self, history):
+    cpdef is_ended(self, history):
         state = history[-1]
         cdef unsigned long p1_placed = state[0]
         cdef unsigned long p2_placed = state[1]
         cdef int previous = state[2]
         cdef int player = state[3]
+        cdef int rows = self.rows
+        cdef int cols = self.cols
 
         if p2_placed == 0:
             return True
@@ -171,7 +173,7 @@ cdef class Board(object):
             return True
 
         cdef unsigned long occupied = p1_placed | p2_placed
-        return (occupied == (1 << (self.rows * self.cols)) - 1 or
+        return (occupied == (1 << (rows * cols)) - 1 or
                 not self.legal_actions([state]))
 
     def win_values(self, history):
@@ -260,7 +262,7 @@ cdef class Board(object):
         r, c = action
         return 'abcdefgh'[c] + str(r+1)
 
-    def next_state(self, state, action):
+    cpdef next_state(self, state, action):
         cdef unsigned long P = self.positions[action]
         cdef unsigned long p1_placed = state[0]
         cdef unsigned long p2_placed = state[1]

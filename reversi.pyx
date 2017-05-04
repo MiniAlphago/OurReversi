@@ -60,7 +60,12 @@ cdef class Board(object):
 
     def legal_actions(self, history):
         ## Kogge-Stone algorithm
-        p1_placed, p2_placed, previous, player = history[-1]
+        state = history[-1]
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int previous = state[2]
+        cdef int player = state[3]
+
         cdef unsigned long occupied = p1_placed | p2_placed
         cdef unsigned long empty = 0xffffffffffffffff ^ occupied
 
@@ -155,14 +160,17 @@ cdef class Board(object):
 
     def is_ended(self, history):
         state = history[-1]
-        p1_placed, p2_placed, previous, player = state
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int previous = state[2]
+        cdef int player = state[3]
 
         if p2_placed == 0:
             return True
         if p1_placed == 0:
             return True
 
-        occupied = p1_placed | p2_placed
+        cdef unsigned long occupied = p1_placed | p2_placed
         return (occupied == (1 << (self.rows * self.cols)) - 1 or
                 not self.legal_actions([state]))
 
@@ -254,7 +262,11 @@ cdef class Board(object):
 
     def next_state(self, state, action):
         cdef unsigned long P = self.positions[action]
-        p1_placed, p2_placed, previous, player = state
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int previous = state[2]
+        cdef int player = state[3]
+
 
         cdef unsigned long occupied = p1_placed | p2_placed
         cdef unsigned long empty = 0xffffffffffffffff ^ occupied
@@ -262,8 +274,18 @@ cdef class Board(object):
         cdef unsigned long mask_a = 0xfefefefefefefefe
         cdef unsigned long mask_h = 0x7f7f7f7f7f7f7f7f
 
-        cdef unsigned long mine = p1_placed if player == 1 else p2_placed
-        cdef unsigned long opp = p2_placed if player == 1 else p1_placed
+        cdef unsigned long mine = 0
+        if player == 1:
+            mine = p1_placed
+        else:
+            mine = p2_placed
+
+        cdef unsigned long opp = 0
+        if player == 1:
+            opp = p2_placed
+        else:
+            opp = p1_placed
+
         cdef unsigned long flips = 0
 
         # N

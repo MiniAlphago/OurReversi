@@ -79,11 +79,11 @@ class UCT(ai.AI):
 
         # Pick the action with the highest average value.
         best_action = None
-        if self.max_depth >= max_searching_depth - 2:  # if the algorithm almost converges
+        if self.max_depth <= max_searching_depth - 2:  # if the algorithm does not converge
             if player == 1:
-                value, best_action = self.Max(state, max_depth, float('-inf'), float('inf'), player)
+                value, best_action = self.plugged_in_minimax.Max(state, 5, float('-inf'), float('inf'), player)
             else:
-                value, best_action = self.Min(state, max_depth, float('-inf'), float('inf'), player)
+                value, best_action = self.plugged_in_minimax.Min(state, 5, float('-inf'), float('inf'), player)
         else:
             best_action = self.data['actions'][0]['action']
         return self.board.unpack_action(best_action)

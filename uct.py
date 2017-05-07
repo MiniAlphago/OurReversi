@@ -9,6 +9,7 @@ from random import choice
 import ai
 import minimax
 import reversi
+import eval
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -24,7 +25,7 @@ class UCT(ai.AI):
 
         self.max_depth = 0
         self.data = {}
-        time = 30    # should be 1 min but in case that time is over
+        time = 3    # should be 1 min but in case that time is over
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
@@ -35,6 +36,7 @@ class UCT(ai.AI):
 
         self.plugged_in_minimax = minimax.MiniMax(reversi.Board())
         self.minimax_max_depth = 2
+        self.interesting_legal_actions = []
 
     def get_action(self):
 
@@ -44,6 +46,7 @@ class UCT(ai.AI):
         self.max_depth = 0
         self.data = {}
         self.stats.clear()
+        self.interesting_legal_actions[:] = []
 
         state = self.history[-1]
         player = self.board.current_player(state)
@@ -61,6 +64,30 @@ class UCT(ai.AI):
         discs_num = self.board.count_discs(self.history[-1])
         max_searching_depth = self.max_actions - discs_num
 
+        # @NOTE evaluate first so that we can prune
+        actions_states = [(p, self.board.next_state(state, p)) for p in legal]
+        legal_actions, scores = eval.evaluation(actions_states)
+        avg_score = 0
+        num_legal_actions = len(legal_actions)
+        if player == 2:  # black, the actual score should be -score
+            for i in range(num_legal_actions):
+                scores[i] = - scores[i]
+        # then we abandon actions with low scores
+        for score in scores:
+            avg_score += score
+        avg_score = avg_score / num_legal_actions
+        tmp_index = -1
+        #print scores, avg_score
+        for i in range(num_legal_actions):
+            if scores[i] >= avg_score:
+                self.interesting_legal_actions.append(legal_actions[i][0])
+            #else:
+            #    tmp_index = i
+            #    break
+        #if len(self.interesting_legal_actions) < 2 and tmp_index > 0:
+        #    self.interesting_legal_actions.append(legal_actions[tmp_index][0])  # append one more action
+        print "selected {0} / {1}".format(len(self.interesting_legal_actions), num_legal_actions)
+
         while time.time() - begin < self.calculation_time:
             self.run_simulation(max_searching_depth)
             games += 1
@@ -73,7 +100,7 @@ class UCT(ai.AI):
         print "Maximum depth searched:", self.max_depth
 
         # Store and display the stats for each possible action.
-        self.data['actions'] = self.calculate_action_values(state, player, legal)
+        self.data['actions'] = self.calculate_action_values(state, player, self.interesting_legal_actions)
         for m in self.data['actions']:
             print self.action_template.format(**m)
 
@@ -107,7 +134,10 @@ class UCT(ai.AI):
         # the most important part
         # Use UCB to evaluate the nodes and
         for t in xrange(1, self.max_actions + 1):
-            legal = self.board.legal_actions(history_copy)
+            if t == 1:
+                legal = self.interesting_legal_actions
+            else:
+                legal = self.board.legal_actions(history_copy)
             actions_states = [(p, self.board.next_state(state, p)) for p in legal]
 
             if all((player, S) in stats for p, S in actions_states):

@@ -107,6 +107,7 @@ class Client(object):
 
         while self.running:
             raw_message = self.socket.recv(4096)
+            print "recv:", raw_message
             messages = raw_message.rstrip().split('\r\n')
             if self.use_gui:
                 self.player.status_text_mutex.acquire()
@@ -201,11 +202,11 @@ class Client(object):
             r, c = -1, -1
         else:
             r, c = self.player.board.pack_action(data['message'])
-            r = r + 1
-            c = c + 1
+            r = r
+            c = c
         wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
-        #print(data_json)  # @DEBUG
+        print "send", data_json  # @DEBUG
         self.socket.sendall(data_json)
 
     def recv(self, expected_size):
@@ -236,7 +237,7 @@ class Client(object):
     def handle_opponent_action(self, data):
         # @ST unwrapped message
         #print(data)  # @DEBUG
-        action = (int(data['y']) - 1, int(data['x']) - 1)  # @ST [row, col]
+        action = (int(data['y']), int(data['x']))  # @ST [row, col]
         #print(action)  # @DEBUG
         if action[0] < 0 or action[1] < 0:  # @ST your opponent did not put a piece
             # @ST it's our turn to put a piece again

@@ -203,8 +203,8 @@ class Client(object):
             r, c = -1, -1
         else:
             r, c = self.player.board.pack_action(data['message'])
-            r = r + 1
-            c = c + 1
+            r = r
+            c = c
         wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
         #print(data_json)  # @DEBUG
@@ -238,7 +238,7 @@ class Client(object):
     def handle_opponent_action(self, data):
         # @ST unwrapped message
         #print(data)  # @DEBUG
-        action = (int(data['y']) - 1, int(data['x']) - 1)  # @ST [row, col]
+        action = (int(data['y']), int(data['x']))  # @ST [row, col]
         #print(action)  # @DEBUG
         if action[0] < 0 or action[1] < 0:  # @ST your opponent did not put a piece
             # @ST it's our turn to put a piece again

@@ -25,7 +25,7 @@ class UCT(ai.AI):
 
         self.max_depth = 0
         self.data = {}
-        time = 30    # should be 1 min but in case that time is over
+        time = 3    # should be 1 min but in case that time is over
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
@@ -67,24 +67,25 @@ class UCT(ai.AI):
         # @NOTE evaluate first so that we can prune
         actions_states = [(p, self.board.next_state(state, p)) for p in legal]
         legal_actions, scores = eval.evaluation(actions_states)
-        avg_scores = 0
+        avg_score = 0
         num_legal_actions = len(legal_actions)
         if player == 2:  # black, the actual score should be -score
             for i in range(num_legal_actions):
                 scores[i] = - scores[i]
         # then we abandon actions with low scores
         for score in scores:
-            avg_scores += score
-        avg_scores = avg_scores / num_legal_actions
+            avg_score += score
+        avg_score = avg_score / num_legal_actions
         tmp_index = -1
+        #print scores, avg_score
         for i in range(num_legal_actions):
-            if scores[i] >= avg_scores:
+            if scores[i] >= avg_score:
                 self.interesting_legal_actions.append(legal_actions[i][0])
-            else:
-                tmp_index = i
-                break
-        if len(self.interesting_legal_actions) < 2:
-            self.interesting_legal_actions.append(legal_actions[tmp_index][0])  # append one more action
+            #else:
+            #    tmp_index = i
+            #    break
+        #if len(self.interesting_legal_actions) < 2 and tmp_index > 0:
+        #    self.interesting_legal_actions.append(legal_actions[tmp_index][0])  # append one more action
         print "selected {0} / {1}".format(len(self.interesting_legal_actions), num_legal_actions)
 
         while time.time() - begin < self.calculation_time:

@@ -70,6 +70,7 @@ class Client(object):
 
         while self.running:
             raw_message = self.socket.recv(4096)
+            print "recv:", raw_message
             messages = raw_message.rstrip().split('\r\n')
             if self.use_gui:
                 self.player.status_text_mutex.acquire()
@@ -168,7 +169,7 @@ class Client(object):
             c = c
         wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
-        #print(data_json)  # @DEBUG
+        print "send", data_json  # @DEBUG
         self.socket.sendall(data_json)
 
     def recv(self, expected_size):

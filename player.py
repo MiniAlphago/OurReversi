@@ -57,10 +57,18 @@ class Client(object):
         print "waiting for server to send player info..."
         # who am I
         raw_message = self.socket.recv(4096)
-        print raw_message  # @DEBUG
+        print "recv", raw_message  # @DEBUG
+        pos = raw_message.find('}{')
+        if pos > 0:
+            l = list(pos)
+            l.insert(pos + 1, '\r\n')
+            raw_message = ''.join(l)
+
         messages = raw_message.rstrip().split('\r\n')
         try:
+            # we need to make sure whether we receive something like {"Black":1,"White":0}{"x":-2,"y":-2}
             data = json.loads(messages[0])  # expect {Black: 0, White: 1} or {Black: 1, White: 0}
+            del messages[0]
             if int(data['White']) == 1:
                 player = 1
             else:
@@ -81,11 +89,12 @@ class Client(object):
             show_gui_thread = self.player.show_gui()
 
         # who's the first to play
-        raw_message = self.socket.recv(4096)
-        print raw_message  # @DEBUG
-        messages = raw_message.rstrip().split('\r\n')
+        if len(messages) == 0:
+            raw_message = self.socket.recv(4096)
+            print "recv", raw_message  # @DEBUG
+            messages = raw_message.rstrip().split('\r\n')
         try:
-            data = json.loads(messages[0])  # expect {Black: 0, White: 1} or {Black: 1, White: 0}
+            data = json.loads(messages[0])  # expect {x: col, y: row}
             if int(data['x']) == -2 or int(data['y']) == -2:
                 first = player
                 state = self.player.board.starting_state(first)
@@ -207,7 +216,7 @@ class Client(object):
             c = c
         wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
-        print(data_json)  # @DEBUG
+        print "send", data_json  # @DEBUG
         self.socket.sendall(data_json)
 
     def recv(self, expected_size):

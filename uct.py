@@ -72,6 +72,7 @@ class UCT(ai.AI):
         if player == 2:  # black, the actual score should be -score
             for i in range(num_legal_actions):
                 scores[i] = - scores[i]
+                print legal_actions[i], scores[i] # @DEBUG
         # then we abandon actions with low scores
         for score in scores:
             avg_score += score

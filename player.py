@@ -253,7 +253,7 @@ class Client(object):
         self.player.state_mutex.acquire()
         if not self.player.board.is_legal(self.player.history, action):  # @ST @NOTE here we assume that we do not preempt
             # @ST maybe we have to wait again
-            invalid_msg = '{0}: invalid move at row {1}, column {2}'.format(players_name[data['state']['player'] - 1], action[0] + 1, action[1] + 1)
+            invalid_msg = '{0}: invalid move at row {1}, column {2}'.format(3 - self.player.player, action[0] + 1, action[1] + 1)
             print(invalid_msg)
             if self.use_gui:
                 self.player.status_text_mutex.acquire()

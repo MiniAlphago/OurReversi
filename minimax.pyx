@@ -1,7 +1,7 @@
 import sys
 import ai
 
-max_depth = 7
+max_depth = 6
 
 class MiniMax(ai.AI):
     def __init__(self, board, **kwargs):

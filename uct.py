@@ -86,7 +86,7 @@ class UCT(ai.AI):
             #    break
         #if len(self.interesting_legal_actions) < 2 and tmp_index > 0:
         #    self.interesting_legal_actions.append(legal_actions[tmp_index][0])  # append one more action
-        self.interesting_legal_actions = self.interesting_legal_actions[:4]  # we only consider the top 4 actions
+        #self.interesting_legal_actions = self.interesting_legal_actions[:4]  # we only consider the top 4 actions @NOTE
         print "selected {0} / {1}".format(len(self.interesting_legal_actions), num_legal_actions)
 
         while time.time() - begin < self.calculation_time:
@@ -116,12 +116,12 @@ class UCT(ai.AI):
                 value, best_action = self.plugged_in_minimax.Max(the_next_state, 5, float('-inf'), float('inf'), the_next_state[3])
             else:
                 value, best_action = self.plugged_in_minimax.Min(the_next_state, 5, float('-inf'), float('inf'), the_next_state[3])
-                value = -value
             interesting_legal_action_values.append(value)
             if value < min_value:
                 min_value = value
             if value > max_value:
                 max_value = value
+            print action, value
         # regularize values
         if max_value == min_value:
             for i in range(len(interesting_legal_action_values)):
@@ -130,14 +130,16 @@ class UCT(ai.AI):
             for i in range(len(interesting_legal_action_values)):
                 interesting_legal_action_values[i] = (interesting_legal_action_values[i] - min_value) / (max_value - min_value) * 100
 
+        print interesting_legal_action_values # @DEBUG
         # weighted average
         w = 1
         if max_searching_depth > 0:
             w = min(self.max_depth / max_searching_depth, 1)
         for i in range(len(interesting_legal_action_values)):
             item = self.data['actions'][i]
-            print item
-            item['percent'] = w * item['percent'] + (1 - w) * interesting_legal_action_values[i]
+            #item['percent'] = w * item['percent'] + (1 - w) * interesting_legal_action_values[i]  # @NOTE
+            item['percent'] = interesting_legal_action_values[i]  # @NOTE
+            print item # @DEBUG
         # sort again
         new_data = sorted(self.data['actions'],
             key=lambda x: (x['percent'], x['plays']),
@@ -152,7 +154,6 @@ class UCT(ai.AI):
         #         value, best_action = self.plugged_in_minimax.Min(state, 6, float('-inf'), float('inf'), player)
         # else:
         #     best_action = self.data['actions'][0]['action']
-        print new_data
         best_action = new_data[0]['action']
         return self.board.unpack_action(best_action)
 

@@ -85,7 +85,7 @@ class Client(object):
         print raw_message  # @DEBUG
         messages = raw_message.rstrip().split('\r\n')
         try:
-            data = json.loads(messages[0])  # expect {Black: 0, White: 1} or {Black: 1, White: 0}
+            data = json.loads(messages[0])  # who moves first
             if int(data['x']) == -2 or int(data['y']) == -2:
                 first = player
                 state = self.player.board.starting_state(first)
@@ -208,6 +208,7 @@ class Client(object):
             c = c
         wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
+        print "sent:", data_json  # @DEBUG
         self.socket.sendall(data_json)
 
     def recv(self, expected_size):

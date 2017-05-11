@@ -32,7 +32,7 @@ class MiniMax(ai.AI):
                 best = self.EvaluateState(state)
                 #print 'max: time to return', 'best: ', best, 'alpha: ', alpha, 'beta: ', beta# @DEBUG
                 return best, None
-            return Min(state, depth, alpha, beta, 3 - player)
+            return self.Min(state, depth, alpha, beta, 3 - player)
         best = float('-inf')
         best_action = None
 
@@ -59,7 +59,7 @@ class MiniMax(ai.AI):
                 best = self.EvaluateState(state)
                 #print 'min: time to return', 'best: ', best, 'alpha: ', alpha, 'beta: ', beta# @DEBUG
                 return best, None
-            return Max(state, depth, alpha, beta, 3 - player)
+            return self.Max(state, depth, alpha, beta, 3 - player)
 
         best = float('inf')
         best_action = None
@@ -85,37 +85,45 @@ class MiniMax(ai.AI):
         return res
 
 # @NOTE Acknowledgement: the evaluation function is written by the TA of another AI class, which is awesome
-class Eval(object):
+cdef class Eval(object):
+    cdef int WEIGHTS[7]
+    cdef unsigned long P_RINGS[7]
+    cdef unsigned long P_CORNER
+    cdef unsigned long P_SUB_CORNER
+    cdef unsigned long FULL_MASK
+    cdef unsigned long BIT[64]
+    cdef object board
+
     def __init__(self, board, **kwargs):
         self.board = board
 
+        self.WEIGHTS[7]
+        self.WEIGHTS[:] = [-3, -7, 11, -4, 8, 1, 2]
+        self.P_RINGS[:] = [0x4281001818008142,
+                   0x42000000004200,
+                   0x2400810000810024,
+                   0x24420000422400,
+                   0x1800008181000018,
+                   0x18004242001800,
+                   0x3C24243C0000]
+        self.P_CORNER = 0x8100000000000081
+        self.P_SUB_CORNER = 0x42C300000000C342
+        self.FULL_MASK = 0xFFFFFFFFFFFFFFFF
+        self.BIT[:] = [1 << n for n in range(64)]
 
-    WEIGHTS = \
-    [-3, -7, 11, -4, 8, 1, 2]
-    P_RINGS = [0x4281001818008142,
-               0x42000000004200,
-               0x2400810000810024,
-               0x24420000422400,
-               0x1800008181000018,
-               0x18004242001800,
-               0x3C24243C0000]
-    P_CORNER = 0x8100000000000081
-    P_SUB_CORNER = 0x42C300000000C342
-    FULL_MASK = 0xFFFFFFFFFFFFFFFF
-    BIT = [1 << n for n in range(64)]
-
-    def eval(self, W, B):
-        w0 = W & self.BIT[0] != 0
-        w1 = W & self.BIT[7] != 0
-        w2 = W & self.BIT[56] != 0
-        w3 = W & self.BIT[63] != 0
-        b0 = B & self.BIT[0] != 0
-        b1 = B & self.BIT[7] != 0
-        b2 = B & self.BIT[56] != 0
-        b3 = B & self.BIT[63] != 0
+    cpdef eval(self, W, B):
+        cdef unsigned long w0 = W & self.BIT[0] != 0
+        cdef unsigned long w1 = W & self.BIT[7] != 0
+        cdef unsigned long w2 = W & self.BIT[56] != 0
+        cdef unsigned long w3 = W & self.BIT[63] != 0
+        cdef unsigned long b0 = B & self.BIT[0] != 0
+        cdef unsigned long b1 = B & self.BIT[7] != 0
+        cdef unsigned long b2 = B & self.BIT[56] != 0
+        cdef unsigned long b3 = B & self.BIT[63] != 0
 
         # stability
-        wunstable = bunstable = 0
+        cdef int wunstable = 0
+        cdef int bunstable = 0
         if w0 != 1 and b0 != 1:
             wunstable += (W & self.BIT[1] != 0) + (W & self.BIT[8] != 0) + (W & self.BIT[9] != 0)
             bunstable += (B & self.BIT[1] != 0) + (B & self.BIT[8] != 0) + (B & self.BIT[9] != 0)
@@ -129,26 +137,38 @@ class Eval(object):
             wunstable += (W & self.BIT[62] != 0) + (W & self.BIT[54] != 0) + (W & self.BIT[55] != 0)
             bunstable += (B & self.BIT[62] != 0) + (B & self.BIT[54] != 0) + (B & self.BIT[55] != 0)
 
-        scoreunstable = - 30.0 * (wunstable - bunstable)
+        cdef double scoreunstable = - 30.0 * (wunstable - bunstable)
 
         # piece difference
-        wpiece = (w0 + w1 + w2 + w3) * 100.0
+        cdef double wpiece = (w0 + w1 + w2 + w3) * 100.0
         for i in range(len(self.WEIGHTS)):
             wpiece += self.WEIGHTS[i] * self.count_bit(W & self.P_RINGS[i])
-        bpiece = (b0 + b1 + b2 + b3) * 100.0
+        cdef double bpiece = (b0 + b1 + b2 + b3) * 100.0
         for i in range(len(self.WEIGHTS)):
             bpiece += self.WEIGHTS[i] * self.count_bit(B & self.P_RINGS[i])
-        scorepiece = wpiece - bpiece
+        cdef double scorepiece = wpiece - bpiece
 
         # mobility
-        wmob = self.count_bit(self.move_gen(W, B))
-        scoremob = 20 * wmob
+        cdef int wmob = self.count_bit(self.move_gen(W, B))
+        cdef double scoremob = 20 * wmob
 
         return scorepiece + scoreunstable + scoremob
 
-    def to_bitboard(self, state):
-        pieces = [[0]*self.board.cols for _ in range(self.board.rows)]  # @ST @NOTE we use 0 for empty, 1 for player 1 and -1 for player 2
-        p1_placed, p2_placed, previous, player = state
+    cpdef to_bitboard(self, state):
+        cdef int pieces[8][8]   # @NOTE 8-by-8 board
+        pieces[0] = [0]*8  # @ST @NOTE we use 0 for empty, 1 for player 1 and -1 for player 2
+        pieces[1] = [0]*8  # @ST @NOTE we use 0 for empty, 1 for player 1 and -1 for player 2
+        pieces[2] = [0]*8  # @ST @NOTE we use 0 for empty, 1 for player 1 and -1 for player 2
+        pieces[3] = [0]*8  # @ST @NOTE we use 0 for empty, 1 for player 1 and -1 for player 2
+        pieces[4] = [0]*8  # @ST @NOTE we use 0 for empty, 1 for player 1 and -1 for player 2
+        pieces[5] = [0]*8  # @ST @NOTE we use 0 for empty, 1 for player 1 and -1 for player 2
+        pieces[6] = [0]*8  # @ST @NOTE we use 0 for empty, 1 for player 1 and -1 for player 2
+        pieces[7] = [0]*8  # @ST @NOTE we use 0 for empty, 1 for player 1 and -1 for player 2
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int previous = state[2]
+        cdef int player = state[3]
+        cdef unsigned long index
         for r in xrange(self.board.rows):
             for c in xrange(self.board.cols):
                 index = 1 << (self.board.cols * r + c)
@@ -157,8 +177,8 @@ class Eval(object):
                 if index & p2_placed:
                     pieces[r][c] = -1 # -1 for black
 
-        W = 0
-        B = 0
+        cdef unsigned long W = 0
+        cdef unsigned long B = 0
         for r in range(8):
             for c in range(8):
                 if pieces[c][r] == -1:
@@ -174,22 +194,22 @@ class Eval(object):
         b  = ((b >> 4) + b)  & 0x0F0F0F0F0F0F0F0F
         return ((b * 0x0101010101010101) & self.FULL_MASK) >> 56
 
-    def move_gen_sub(self, P, mask, dir):
+    cdef move_gen_sub(self, P, mask, dir):
         dir2 = long(dir * 2)
-        flip1  = mask & (P << dir)
-        flip2  = mask & (P >> dir)
+        cdef unsigned long flip1  = mask & (P << dir)
+        cdef unsigned long flip2  = mask & (P >> dir)
         flip1 |= mask & (flip1 << dir)
         flip2 |= mask & (flip2 >> dir)
-        mask1  = mask & (mask << dir)
-        mask2  = mask & (mask >> dir)
+        cdef unsigned long mask1  = mask & (mask << dir)
+        cdef unsigned long mask2  = mask & (mask >> dir)
         flip1 |= mask1 & (flip1 << dir2)
         flip2 |= mask2 & (flip2 >> dir2)
         flip1 |= mask1 & (flip1 << dir2)
         flip2 |= mask2 & (flip2 >> dir2)
         return (flip1 << dir) | (flip2 >> dir)
 
-    def move_gen(self, P, O):
-        mask = O & 0x7E7E7E7E7E7E7E7E
+    cdef move_gen(self, P, O):
+        cdef unsigned long mask = O & 0x7E7E7E7E7E7E7E7E
         return ((self.move_gen_sub(P, mask, 1)
                 | self.move_gen_sub(P, O, 8)
                 | self.move_gen_sub(P, mask, 7)

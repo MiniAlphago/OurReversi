@@ -1,8 +1,9 @@
 def evaluation(actions_states):
     #evaluation contains 3 parts
-    WEIGHTS = \
-    [-5, -8, 13, -4, 10, -5, 6]
-    P_RINGS = [0x4281001818008142,
+    cdef int WEIGHTS[7]
+    WEIGHTS[:] = [-5, -8, 13, -4, 10, -5, 6]
+    cdef unsigned long P_RINGS[7]
+    P_RINGS[:] = [0x4281001818008142,
                0x42000000004200,
                0x2400810000810024,
                0x24420000422400,
@@ -15,7 +16,8 @@ def evaluation(actions_states):
     results=[]
     score = []
     evalu={}
-    BIT = [1 << n for n in range(64)]
+    cdef unsigned long BIT[64]
+    BIT[:] = [1 << n for n in range(64)]
 
     cdef long mine_stab=0
     cdef long opp_stab=0

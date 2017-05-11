@@ -57,6 +57,7 @@ class Client(object):
         print "waiting for server to send player info..."
         # who am I
         raw_message = self.socket.recv(4096)
+        print raw_message  # @DEBUG
         messages = raw_message.rstrip().split('\r\n')
         try:
             data = json.loads(messages[0])  # expect {Black: 0, White: 1} or {Black: 1, White: 0}
@@ -81,6 +82,7 @@ class Client(object):
 
         # who's the first to play
         raw_message = self.socket.recv(4096)
+        print raw_message  # @DEBUG
         messages = raw_message.rstrip().split('\r\n')
         try:
             data = json.loads(messages[0])  # expect {Black: 0, White: 1} or {Black: 1, White: 0}
@@ -206,7 +208,6 @@ class Client(object):
             c = c
         wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
-        print "send", data_json  # @DEBUG
         self.socket.sendall(data_json)
 
     def recv(self, expected_size):
@@ -254,7 +255,7 @@ class Client(object):
         self.player.state_mutex.acquire()
         if not self.player.board.is_legal(self.player.history, action):  # @ST @NOTE here we assume that we do not preempt
             # @ST maybe we have to wait again
-            invalid_msg = '{0}: invalid move at row {1}, column {2}'.format(players_name[data['state']['player'] - 1], action[0] + 1, action[1] + 1)
+            invalid_msg = 'player {0}: invalid move at row {1}, column {2}'.format(players_name[3 - self.player.player], action[0] + 1, action[1] + 1)
             print(invalid_msg)
             if self.use_gui:
                 self.player.status_text_mutex.acquire()

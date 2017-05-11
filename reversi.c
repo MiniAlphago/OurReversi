@@ -692,7 +692,7 @@ struct __pyx_obj_7reversi___pyx_scope_struct_1_genexpr {
 
 
 /* "reversi.pyx":33
- *                 self.positions[(3,4)] + self.positions[(4,3)], 2, 1)
+ *                 self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)
  * 
  *     def display(self, state, action, _unicode=True):             # <<<<<<<<<<<<<<
  *         pieces = self.unicode_pieces if _unicode else self.str_pieces
@@ -906,6 +906,14 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func);
 
 /* None.proto */
 static CYTHON_INLINE void __Pyx_RaiseClosureNameError(const char *varname);
+
+/* PyIntBinop.proto */
+#if !CYTHON_COMPILING_IN_PYPY
+static PyObject* __Pyx_PyInt_SubtractCObj(PyObject *op1, PyObject *op2, long intval, int inplace);
+#else
+#define __Pyx_PyInt_SubtractCObj(op1, op2, intval, inplace)\
+    (inplace ? PyNumber_InPlaceSubtract(op1, op2) : PyNumber_Subtract(op1, op2))
+#endif
 
 /* RaiseArgTupleInvalid.proto */
 static void __Pyx_RaiseArgtupleInvalid(const char* func_name, int exact,
@@ -1397,7 +1405,7 @@ static PyObject *__pyx_n_s_xrange;
 static int __pyx_pf_7reversi_5Board___init__(struct __pyx_obj_7reversi_Board *__pyx_v_self, CYTHON_UNUSED PyObject *__pyx_v_args, CYTHON_UNUSED PyObject *__pyx_v_kwargs); /* proto */
 static PyObject *__pyx_pf_7reversi_5Board_10initialize_genexpr(PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_7reversi_5Board_2initialize(PyTypeObject *__pyx_v_cls); /* proto */
-static PyObject *__pyx_pf_7reversi_5Board_4starting_state(struct __pyx_obj_7reversi_Board *__pyx_v_self); /* proto */
+static PyObject *__pyx_pf_7reversi_5Board_4starting_state(struct __pyx_obj_7reversi_Board *__pyx_v_self, PyObject *__pyx_v_first); /* proto */
 static PyObject *__pyx_pf_7reversi_5Board_7display_7genexpr_genexpr(PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_7reversi_5Board_7display_genexpr(PyObject *__pyx_self); /* proto */
 static PyObject *__pyx_pf_7reversi_5Board_6display(struct __pyx_obj_7reversi_Board *__pyx_v_self, PyObject *__pyx_v_state, PyObject *__pyx_v_action, PyObject *__pyx_v__unicode); /* proto */
@@ -1717,7 +1725,7 @@ static PyObject *__pyx_gb_7reversi_5Board_10initialize_2generator(__pyx_Coroutin
  *                              for r in xrange(cls.rows)
  *                              for c in xrange(cls.cols))             # <<<<<<<<<<<<<<
  * 
- *     def starting_state(self):
+ *     def starting_state(self, first):
  */
     if (unlikely(!__pyx_cur_scope->__pyx_outer_scope->__pyx_v_cls)) { __Pyx_RaiseClosureNameError("cls"); __PYX_ERR(0, 26, __pyx_L1_error) }
     __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_cur_scope->__pyx_outer_scope->__pyx_v_cls), __pyx_n_s_cols); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 26, __pyx_L1_error)
@@ -1843,7 +1851,7 @@ static PyObject *__pyx_gb_7reversi_5Board_10initialize_2generator(__pyx_Coroutin
  *                              for r in xrange(cls.rows)
  *                              for c in xrange(cls.cols))             # <<<<<<<<<<<<<<
  * 
- *     def starting_state(self):
+ *     def starting_state(self, first):
  */
     }
     __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
@@ -2006,25 +2014,25 @@ static PyObject *__pyx_pf_7reversi_5Board_2initialize(PyTypeObject *__pyx_v_cls)
 /* "reversi.pyx":28
  *                              for c in xrange(cls.cols))
  * 
- *     def starting_state(self):             # <<<<<<<<<<<<<<
+ *     def starting_state(self, first):             # <<<<<<<<<<<<<<
  *         # p1 placed, p2 placed, previous player, player to move
  *         return (self.positions[(3,3)] + self.positions[(4,4)],
  */
 
 /* Python wrapper */
-static PyObject *__pyx_pw_7reversi_5Board_5starting_state(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused); /*proto*/
-static PyObject *__pyx_pw_7reversi_5Board_5starting_state(PyObject *__pyx_v_self, CYTHON_UNUSED PyObject *unused) {
+static PyObject *__pyx_pw_7reversi_5Board_5starting_state(PyObject *__pyx_v_self, PyObject *__pyx_v_first); /*proto*/
+static PyObject *__pyx_pw_7reversi_5Board_5starting_state(PyObject *__pyx_v_self, PyObject *__pyx_v_first) {
   PyObject *__pyx_r = 0;
   __Pyx_RefNannyDeclarations
   __Pyx_RefNannySetupContext("starting_state (wrapper)", 0);
-  __pyx_r = __pyx_pf_7reversi_5Board_4starting_state(((struct __pyx_obj_7reversi_Board *)__pyx_v_self));
+  __pyx_r = __pyx_pf_7reversi_5Board_4starting_state(((struct __pyx_obj_7reversi_Board *)__pyx_v_self), ((PyObject *)__pyx_v_first));
 
   /* function exit code */
   __Pyx_RefNannyFinishContext();
   return __pyx_r;
 }
 
-static PyObject *__pyx_pf_7reversi_5Board_4starting_state(struct __pyx_obj_7reversi_Board *__pyx_v_self) {
+static PyObject *__pyx_pf_7reversi_5Board_4starting_state(struct __pyx_obj_7reversi_Board *__pyx_v_self, PyObject *__pyx_v_first) {
   PyObject *__pyx_r = NULL;
   __Pyx_RefNannyDeclarations
   PyObject *__pyx_t_1 = NULL;
@@ -2034,10 +2042,10 @@ static PyObject *__pyx_pf_7reversi_5Board_4starting_state(struct __pyx_obj_7reve
   __Pyx_RefNannySetupContext("starting_state", 0);
 
   /* "reversi.pyx":30
- *     def starting_state(self):
+ *     def starting_state(self, first):
  *         # p1 placed, p2 placed, previous player, player to move
  *         return (self.positions[(3,3)] + self.positions[(4,4)],             # <<<<<<<<<<<<<<
- *                 self.positions[(3,4)] + self.positions[(4,3)], 2, 1)
+ *                 self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)
  * 
  */
   __Pyx_XDECREF(__pyx_r);
@@ -2059,7 +2067,7 @@ static PyObject *__pyx_pf_7reversi_5Board_4starting_state(struct __pyx_obj_7reve
   /* "reversi.pyx":31
  *         # p1 placed, p2 placed, previous player, player to move
  *         return (self.positions[(3,3)] + self.positions[(4,4)],
- *                 self.positions[(3,4)] + self.positions[(4,3)], 2, 1)             # <<<<<<<<<<<<<<
+ *                 self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)             # <<<<<<<<<<<<<<
  * 
  *     def display(self, state, action, _unicode=True):
  */
@@ -2077,36 +2085,38 @@ static PyObject *__pyx_pf_7reversi_5Board_4starting_state(struct __pyx_obj_7reve
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
+  __pyx_t_4 = __Pyx_PyInt_SubtractCObj(__pyx_int_3, __pyx_v_first, 3, 0); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 31, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_4);
 
   /* "reversi.pyx":30
- *     def starting_state(self):
+ *     def starting_state(self, first):
  *         # p1 placed, p2 placed, previous player, player to move
  *         return (self.positions[(3,3)] + self.positions[(4,4)],             # <<<<<<<<<<<<<<
- *                 self.positions[(3,4)] + self.positions[(4,3)], 2, 1)
+ *                 self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)
  * 
  */
-  __pyx_t_4 = PyTuple_New(4); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 30, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_4);
+  __pyx_t_2 = PyTuple_New(4); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 30, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
   __Pyx_GIVEREF(__pyx_t_1);
-  PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_1);
+  PyTuple_SET_ITEM(__pyx_t_2, 0, __pyx_t_1);
   __Pyx_GIVEREF(__pyx_t_3);
-  PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_3);
-  __Pyx_INCREF(__pyx_int_2);
-  __Pyx_GIVEREF(__pyx_int_2);
-  PyTuple_SET_ITEM(__pyx_t_4, 2, __pyx_int_2);
-  __Pyx_INCREF(__pyx_int_1);
-  __Pyx_GIVEREF(__pyx_int_1);
-  PyTuple_SET_ITEM(__pyx_t_4, 3, __pyx_int_1);
+  PyTuple_SET_ITEM(__pyx_t_2, 1, __pyx_t_3);
+  __Pyx_GIVEREF(__pyx_t_4);
+  PyTuple_SET_ITEM(__pyx_t_2, 2, __pyx_t_4);
+  __Pyx_INCREF(__pyx_v_first);
+  __Pyx_GIVEREF(__pyx_v_first);
+  PyTuple_SET_ITEM(__pyx_t_2, 3, __pyx_v_first);
   __pyx_t_1 = 0;
   __pyx_t_3 = 0;
-  __pyx_r = __pyx_t_4;
   __pyx_t_4 = 0;
+  __pyx_r = __pyx_t_2;
+  __pyx_t_2 = 0;
   goto __pyx_L0;
 
   /* "reversi.pyx":28
  *                              for c in xrange(cls.cols))
  * 
- *     def starting_state(self):             # <<<<<<<<<<<<<<
+ *     def starting_state(self, first):             # <<<<<<<<<<<<<<
  *         # p1 placed, p2 placed, previous player, player to move
  *         return (self.positions[(3,3)] + self.positions[(4,4)],
  */
@@ -2126,7 +2136,7 @@ static PyObject *__pyx_pf_7reversi_5Board_4starting_state(struct __pyx_obj_7reve
 }
 
 /* "reversi.pyx":33
- *                 self.positions[(3,4)] + self.positions[(4,3)], 2, 1)
+ *                 self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)
  * 
  *     def display(self, state, action, _unicode=True):             # <<<<<<<<<<<<<<
  *         pieces = self.unicode_pieces if _unicode else self.str_pieces
@@ -2522,7 +2532,7 @@ static PyObject *__pyx_gb_7reversi_5Board_7display_2generator1(__pyx_CoroutineOb
 }
 
 /* "reversi.pyx":33
- *                 self.positions[(3,4)] + self.positions[(4,3)], 2, 1)
+ *                 self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)
  * 
  *     def display(self, state, action, _unicode=True):             # <<<<<<<<<<<<<<
  *         pieces = self.unicode_pieces if _unicode else self.str_pieces
@@ -3275,7 +3285,7 @@ static PyObject *__pyx_pf_7reversi_5Board_6display(struct __pyx_obj_7reversi_Boa
   goto __pyx_L0;
 
   /* "reversi.pyx":33
- *                 self.positions[(3,4)] + self.positions[(4,3)], 2, 1)
+ *                 self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)
  * 
  *     def display(self, state, action, _unicode=True):             # <<<<<<<<<<<<<<
  *         pieces = self.unicode_pieces if _unicode else self.str_pieces
@@ -8811,7 +8821,7 @@ static void __pyx_tp_dealloc_7reversi_Board(PyObject *o) {
 
 static PyMethodDef __pyx_methods_7reversi_Board[] = {
   {"initialize", (PyCFunction)__pyx_pw_7reversi_5Board_3initialize, METH_NOARGS, 0},
-  {"starting_state", (PyCFunction)__pyx_pw_7reversi_5Board_5starting_state, METH_NOARGS, 0},
+  {"starting_state", (PyCFunction)__pyx_pw_7reversi_5Board_5starting_state, METH_O, 0},
   {"display", (PyCFunction)__pyx_pw_7reversi_5Board_7display, METH_VARARGS|METH_KEYWORDS, 0},
   {"is_legal", (PyCFunction)__pyx_pw_7reversi_5Board_9is_legal, METH_VARARGS|METH_KEYWORDS, 0},
   {"legal_actions", (PyCFunction)__pyx_pw_7reversi_5Board_11legal_actions, METH_O, 0},
@@ -9831,10 +9841,10 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_RefNannySetupContext("__Pyx_InitCachedConstants", 0);
 
   /* "reversi.pyx":30
- *     def starting_state(self):
+ *     def starting_state(self, first):
  *         # p1 placed, p2 placed, previous player, player to move
  *         return (self.positions[(3,3)] + self.positions[(4,4)],             # <<<<<<<<<<<<<<
- *                 self.positions[(3,4)] + self.positions[(4,3)], 2, 1)
+ *                 self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)
  * 
  */
   __pyx_tuple_ = PyTuple_Pack(2, __pyx_int_3, __pyx_int_3); if (unlikely(!__pyx_tuple_)) __PYX_ERR(0, 30, __pyx_L1_error)
@@ -9847,7 +9857,7 @@ static int __Pyx_InitCachedConstants(void) {
   /* "reversi.pyx":31
  *         # p1 placed, p2 placed, previous player, player to move
  *         return (self.positions[(3,3)] + self.positions[(4,4)],
- *                 self.positions[(3,4)] + self.positions[(4,3)], 2, 1)             # <<<<<<<<<<<<<<
+ *                 self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)             # <<<<<<<<<<<<<<
  * 
  *     def display(self, state, action, _unicode=True):
  */
@@ -10602,6 +10612,122 @@ static CYTHON_INLINE PyObject* __Pyx_PyObject_CallNoArg(PyObject *func) {
     static CYTHON_INLINE void __Pyx_RaiseClosureNameError(const char *varname) {
     PyErr_Format(PyExc_NameError, "free variable '%s' referenced before assignment in enclosing scope", varname);
 }
+
+/* PyIntBinop */
+    #if !CYTHON_COMPILING_IN_PYPY
+static PyObject* __Pyx_PyInt_SubtractCObj(PyObject *op1, PyObject *op2, CYTHON_UNUSED long intval, CYTHON_UNUSED int inplace) {
+    #if PY_MAJOR_VERSION < 3
+    if (likely(PyInt_CheckExact(op2))) {
+        const long a = intval;
+        long x;
+        long b = PyInt_AS_LONG(op2);
+            x = (long)((unsigned long)a - b);
+            if (likely((x^a) >= 0 || (x^~b) >= 0))
+                return PyInt_FromLong(x);
+            return PyLong_Type.tp_as_number->nb_subtract(op1, op2);
+    }
+    #endif
+    #if CYTHON_USE_PYLONG_INTERNALS
+    if (likely(PyLong_CheckExact(op2))) {
+        const long a = intval;
+        long b, x;
+#ifdef HAVE_LONG_LONG
+        const PY_LONG_LONG lla = intval;
+        PY_LONG_LONG llb, llx;
+#endif
+        const digit* digits = ((PyLongObject*)op2)->ob_digit;
+        const Py_ssize_t size = Py_SIZE(op2);
+        if (likely(__Pyx_sst_abs(size) <= 1)) {
+            b = likely(size) ? digits[0] : 0;
+            if (size == -1) b = -b;
+        } else {
+            switch (size) {
+                case -2:
+                    if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
+                        b = -(long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 2 * PyLong_SHIFT) {
+                        llb = -(PY_LONG_LONG) (((((unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                case 2:
+                    if (8 * sizeof(long) - 1 > 2 * PyLong_SHIFT) {
+                        b = (long) (((((unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 2 * PyLong_SHIFT) {
+                        llb = (PY_LONG_LONG) (((((unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                case -3:
+                    if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
+                        b = -(long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 3 * PyLong_SHIFT) {
+                        llb = -(PY_LONG_LONG) (((((((unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                case 3:
+                    if (8 * sizeof(long) - 1 > 3 * PyLong_SHIFT) {
+                        b = (long) (((((((unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 3 * PyLong_SHIFT) {
+                        llb = (PY_LONG_LONG) (((((((unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                case -4:
+                    if (8 * sizeof(long) - 1 > 4 * PyLong_SHIFT) {
+                        b = -(long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 4 * PyLong_SHIFT) {
+                        llb = -(PY_LONG_LONG) (((((((((unsigned PY_LONG_LONG)digits[3]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                case 4:
+                    if (8 * sizeof(long) - 1 > 4 * PyLong_SHIFT) {
+                        b = (long) (((((((((unsigned long)digits[3]) << PyLong_SHIFT) | (unsigned long)digits[2]) << PyLong_SHIFT) | (unsigned long)digits[1]) << PyLong_SHIFT) | (unsigned long)digits[0]));
+                        break;
+#ifdef HAVE_LONG_LONG
+                    } else if (8 * sizeof(PY_LONG_LONG) - 1 > 4 * PyLong_SHIFT) {
+                        llb = (PY_LONG_LONG) (((((((((unsigned PY_LONG_LONG)digits[3]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[2]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[1]) << PyLong_SHIFT) | (unsigned PY_LONG_LONG)digits[0]));
+                        goto long_long;
+#endif
+                    }
+                default: return PyLong_Type.tp_as_number->nb_subtract(op1, op2);
+            }
+        }
+                x = a - b;
+            return PyLong_FromLong(x);
+#ifdef HAVE_LONG_LONG
+        long_long:
+                llx = lla - llb;
+            return PyLong_FromLongLong(llx);
+#endif
+        
+        
+    }
+    #endif
+    if (PyFloat_CheckExact(op2)) {
+        const long a = intval;
+        double b = PyFloat_AS_DOUBLE(op2);
+            double result;
+            PyFPE_START_PROTECT("subtract", return NULL)
+            result = ((double)a) - (double)b;
+            PyFPE_END_PROTECT(result)
+            return PyFloat_FromDouble(result);
+    }
+    return (inplace ? PyNumber_InPlaceSubtract : PyNumber_Subtract)(op1, op2);
+}
+#endif
 
 /* RaiseArgTupleInvalid */
     static void __Pyx_RaiseArgtupleInvalid(

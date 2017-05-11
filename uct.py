@@ -114,9 +114,10 @@ class UCT(ai.AI):
             the_next_state = self.board.next_state(state, action)
             if the_next_state[3] == 1:
                 value, best_action = self.plugged_in_minimax.Max(the_next_state, 5, float('-inf'), float('inf'), the_next_state[3])
-                value = -value
             else:
                 value, best_action = self.plugged_in_minimax.Min(the_next_state, 5, float('-inf'), float('inf'), the_next_state[3])
+            if player == 2:
+                value = -value
             interesting_legal_action_values.append(value)
             if value < min_value:
                 min_value = value

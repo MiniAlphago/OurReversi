@@ -172,9 +172,10 @@ class Server(object):
 
     def send_opponent(self, data, socket):
         data = json.loads(data)
-
-        if not data.get('x') or not data.get('y'):
+        if data.get('x') == None or data.get('y') == None:
+            print "@BUG here", data.get('x'), data.get('y')
             return
+        print data  # @DEBUG
         data_json = "{0}\r\n".format(json.dumps(data))
         socket.sendall(data_json)
 

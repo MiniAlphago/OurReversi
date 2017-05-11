@@ -109,12 +109,12 @@ def evaluation(actions_states):
     #print results
         score.append(T[t][1])
     #print T[1][1], T[2][1]
-    cdef long t1 = T[1][1]
-    cdef long t2 = T[2][1]
-    if(t1==0):
-        t1=1
-    if(t2==0):
-        t2=1
+#    cdef long t1 = T[1][1]
+#    cdef long t2 = T[2][1]   # @BUG index out of range
+#    if(t1==0):
+#        t1=1
+#    if(t2==0):
+#        t2=1
 
 #    if(((T[0][1]-t1)/abs(t1))>0.25):
 #        return results[0:1],score[0:1]

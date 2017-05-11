@@ -60,7 +60,7 @@ class Client(object):
         print "recv", raw_message  # @DEBUG
         pos = raw_message.find('}{')
         if pos > 0:
-            l = list(pos)
+            l = list(raw_message)
             l.insert(pos + 1, '\r\n')
             raw_message = ''.join(l)
 

@@ -86,7 +86,7 @@ class UCT(ai.AI):
             #    break
         #if len(self.interesting_legal_actions) < 2 and tmp_index > 0:
         #    self.interesting_legal_actions.append(legal_actions[tmp_index][0])  # append one more action
-        self.interesting_legal_actions = self.interesting_legal_actions[:3]  # we only consider the top 3 actions
+        self.interesting_legal_actions = self.interesting_legal_actions[:4]  # we only consider the top 4 actions
         print "selected {0} / {1}".format(len(self.interesting_legal_actions), num_legal_actions)
 
         while time.time() - begin < self.calculation_time:
@@ -105,15 +105,53 @@ class UCT(ai.AI):
         for m in self.data['actions']:
             print self.action_template.format(**m)
 
-        # Pick the action with the highest average value.
-        best_action = None
-        if self.max_depth <= max_searching_depth - 2:  # if the algorithm does not converge
-            if player == 1:
-                value, best_action = self.plugged_in_minimax.Max(state, 6, float('-inf'), float('inf'), player)
-            else:
-                value, best_action = self.plugged_in_minimax.Min(state, 6, float('-inf'), float('inf'), player)
+        # do minimax
+        interesting_legal_action_values = []
+        min_value = float('inf')
+        max_value = float('-inf')
+        for item in self.data['actions']:
+            action = item['action']
+            the_next_state = self.board.next_state(state, player)
+            if the_next_state[3] == 1:
+                value, best_action = self.plugged_in_minimax.Max(the_next_state, 5, float('-inf'), float('inf'), the_next_state[3])
+             else:
+                value, best_action = self.plugged_in_minimax.Min(the_next_state, 5, float('-inf'), float('inf'), the_next_state[3])
+                value = -value
+            interesting_legal_action_values.append(value)
+            if value < min_values:
+                min_value = value
+            if value > max_values:
+                max_value = value
+        # regularize values
+        if max_value == min_value:
+            for i in range(len(interesting_legal_action_values)):
+                interesting_legal_action_values[i] = 1.0
         else:
-            best_action = self.data['actions'][0]['action']
+            for i in range(len(interesting_legal_action_values)):
+                interesting_legal_action_values[i] = (interesting_legal_action_values - min_value) / (max_value - min_value)
+
+        # weighted average
+        w = 1
+        if max_searching_depth > 0
+            w = min(self.max_depth / max_searching_depth, 1)
+        for i in range(len(interesting_legal_action_values)):
+            item = self.data['actions'][i]:
+            item['average'] = w * item['average'] + (1 - w) * interesting_legal_action_values[i]
+        # sort again
+        new_data = sorted(self.data['actions'],
+            key=lambda x: (x['average'], x['plays']),
+            reverse=True)
+
+        # # Pick the action with the highest average value.
+        # best_action = None
+        # if self.max_depth <= max_searching_depth - 2:  # if the algorithm does not converge
+        #     if player == 1:
+        #         value, best_action = self.plugged_in_minimax.Max(state, 6, float('-inf'), float('inf'), player)
+        #     else:
+        #         value, best_action = self.plugged_in_minimax.Min(state, 6, float('-inf'), float('inf'), player)
+        # else:
+        #     best_action = self.data['actions'][0]['action']
+        best_action = new_data['actions'][0]['action']
         return self.board.unpack_action(best_action)
 
     # Here we run the simulation

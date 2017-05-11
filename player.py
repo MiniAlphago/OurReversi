@@ -206,7 +206,6 @@ class Client(object):
             c = c
         wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
-        print "send", data_json  # @DEBUG
         self.socket.sendall(data_json)
 
     def recv(self, expected_size):

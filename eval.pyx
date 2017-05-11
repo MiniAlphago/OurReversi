@@ -1,7 +1,7 @@
 def evaluation(actions_states):
     #evaluation contains 3 parts
     WEIGHTS = \
-    [-5, -8, 13, -4, 10, -5, 6]
+    [-3, -7, 11, -4, 8, 1, 2]
     P_RINGS = [0x4281001818008142,
                0x42000000004200,
                0x2400810000810024,

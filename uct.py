@@ -38,7 +38,7 @@ class UCT(ai.AI):
 
         self.plugged_in_minimax = minimax.MiniMax(reversi.Board())
         self.minimax_max_depth = 2
-        self.interesting_legal_actions = []
+       # self.interesting_legal_actions = []
 
     def get_action(self):
 
@@ -48,7 +48,7 @@ class UCT(ai.AI):
         self.max_depth = 0
         self.data = {}
         self.stats.clear()
-        self.interesting_legal_actions[:] = []
+        #self.interesting_legal_actions[:] = []
 
         state = self.history[-1]
         player = self.board.current_player(state)
@@ -125,11 +125,8 @@ class UCT(ai.AI):
 
         # the most important part
         # Use UCB to evaluate the nodes and
-        for t in xrange(1, self.max_actions + 1):
-            if t == 1:
-                legal = self.interesting_legal_actions
-            else:
-                legal = self.board.legal_actions(history_copy)
+        for t in xrange(1, self.max_actions + 1):    
+            legal = self.board.legal_actions(history_copy)
             actions_states = [(p, self.board.next_state(state, p)) for p in legal]
 
             if all((player, S) in stats for p, S in actions_states):

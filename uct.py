@@ -111,35 +111,36 @@ class UCT(ai.AI):
         max_value = float('-inf')
         for item in self.data['actions']:
             action = item['action']
-            the_next_state = self.board.next_state(state, player)
+            the_next_state = self.board.next_state(state, action)
             if the_next_state[3] == 1:
                 value, best_action = self.plugged_in_minimax.Max(the_next_state, 5, float('-inf'), float('inf'), the_next_state[3])
-             else:
+            else:
                 value, best_action = self.plugged_in_minimax.Min(the_next_state, 5, float('-inf'), float('inf'), the_next_state[3])
                 value = -value
             interesting_legal_action_values.append(value)
-            if value < min_values:
+            if value < min_value:
                 min_value = value
-            if value > max_values:
+            if value > max_value:
                 max_value = value
         # regularize values
         if max_value == min_value:
             for i in range(len(interesting_legal_action_values)):
-                interesting_legal_action_values[i] = 1.0
+                interesting_legal_action_values[i] = 100.0
         else:
             for i in range(len(interesting_legal_action_values)):
-                interesting_legal_action_values[i] = (interesting_legal_action_values - min_value) / (max_value - min_value)
+                interesting_legal_action_values[i] = (interesting_legal_action_values[i] - min_value) / (max_value - min_value) * 100
 
         # weighted average
         w = 1
-        if max_searching_depth > 0
+        if max_searching_depth > 0:
             w = min(self.max_depth / max_searching_depth, 1)
         for i in range(len(interesting_legal_action_values)):
-            item = self.data['actions'][i]:
-            item['average'] = w * item['average'] + (1 - w) * interesting_legal_action_values[i]
+            item = self.data['actions'][i]
+            print item
+            item['percent'] = w * item['percent'] + (1 - w) * interesting_legal_action_values[i]
         # sort again
         new_data = sorted(self.data['actions'],
-            key=lambda x: (x['average'], x['plays']),
+            key=lambda x: (x['percent'], x['plays']),
             reverse=True)
 
         # # Pick the action with the highest average value.
@@ -151,7 +152,8 @@ class UCT(ai.AI):
         #         value, best_action = self.plugged_in_minimax.Min(state, 6, float('-inf'), float('inf'), player)
         # else:
         #     best_action = self.data['actions'][0]['action']
-        best_action = new_data['actions'][0]['action']
+        print new_data
+        best_action = new_data[0]['action']
         return self.board.unpack_action(best_action)
 
     # Here we run the simulation

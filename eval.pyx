@@ -15,28 +15,28 @@ def evaluation(actions_states):
     results=[]
     score = []
     evalu={}
-    BIT = [1 << n for n in range(64)]
+    BIT = [1 << n for n in xrange(64)]
 
-    cdef long mine_stab=0
-    cdef long opp_stab=0
+    cdef int mine_stab=0
+    cdef int opp_stab=0
     cdef unsigned long mine = 0
     cdef unsigned long opp = 0
 
 
-    cdef unsigned long m0 = 0
-    cdef unsigned long m1 = 0
-    cdef unsigned long m2 = 0
-    cdef unsigned long m3 = 0
-    cdef unsigned long o0 = 0
-    cdef unsigned long o1 = 0
-    cdef unsigned long o2 = 0
-    cdef unsigned long o3 = 0
-    cdef double scoreunstable = 0
-    cdef double mpiece = 0
-    cdef double opiece = 0
-    cdef double scorepiece = 0
-    cdef long mmob = 0
-    cdef long scoremob = 0
+    cdef int m0 = 0
+    cdef int m1 = 0
+    cdef int m2 = 0
+    cdef int m3 = 0
+    cdef int o0 = 0
+    cdef int o1 = 0
+    cdef int o2 = 0
+    cdef int o3 = 0
+    cdef int scoreunstable = 0
+    cdef int mpiece = 0
+    cdef int opiece = 0
+    cdef int scorepiece = 0
+    cdef int mmob = 0
+    cdef int scoremob = 0
 
 
     for p,S in actions_states:
@@ -71,15 +71,15 @@ def evaluation(actions_states):
             mine_stab += (mine & BIT[62] != 0) + (mine & BIT[54] != 0) + (mine & BIT[55] != 0)
             opp_stab  += (opp  & BIT[62] != 0) + (opp  & BIT[54] != 0) + (opp  & BIT[55] != 0)
 
-        scoreunstable = - 30.0 * (mine_stab - opp_stab)
+        scoreunstable = - 30 * (mine_stab - opp_stab)
 
         # piece difference
-        mpiece = (m0 + m1 + m2 + m3) * 100.0
-        for i in range(len(WEIGHTS)):
+        mpiece = (m0 + m1 + m2 + m3) * 100
+        for i in xrange(len(WEIGHTS)):
             mpiece += WEIGHTS[i] * count_bit(mine & P_RINGS[i])
-        opiece = (o0 + o1 + o2 + o3) * 100.0
+        opiece = (o0 + o1 + o2 + o3) * 100
 
-        for i in range(len(WEIGHTS)):
+        for i in xrange(len(WEIGHTS)):
             opiece += WEIGHTS[i] * count_bit(opp  & P_RINGS[i])
 
         scorepiece = mpiece - opiece
@@ -101,23 +101,23 @@ def evaluation(actions_states):
 
     T = sorted(evalu.items(),key=lambda item:item[1],reverse=True)
 
-    for t in range(len(T)):
+    for t in xrange(len(T)):
         results.append(T[t][0])
     #result = [(p,S) for i in T[i][0]]
     #print results
         score.append(T[t][1])
     #print T[1][1], T[2][1]
-    cdef long t1 = T[1][1]
-    cdef long t2 = T[2][1]
+    cdef int t1 = T[1][1]
+    cdef int t2 = T[2][1]
     if(t1==0):
         t1=1
     if(t2==0):
         t2=1
 
-    if(((T[0][1]-t1)/abs(t1))>0.25):
+    if(((T[0][1]-t1)/abs(t1))>0.3):
         return results[0:1],score[0:1]
     else:
-        if(((T[0][1]-t2)/abs(t2))>0.35):
+        if(((T[0][1]-t2)/abs(t2))>0.5):
             return results[0:2],score[0:2]
         else:
             return results[0:3],score[0:3]

@@ -9,6 +9,7 @@ from random import choice
 import ai
 import minimax
 import reversi
+import eval
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -24,7 +25,7 @@ class UCT(ai.AI):
 
         self.max_depth = 0
         self.data = {}
-        time = 30    # should be 1 min but in case that time is over
+        time = 58    # should be 1 min but in case that time is over
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
@@ -59,33 +60,46 @@ class UCT(ai.AI):
         begin = time.time()
 
         discs_num = self.board.count_discs(self.history[-1])
-        max_searching_depth = self.max_actions - discs_num
 
-        while time.time() - begin < self.calculation_time:
-            self.run_simulation(max_searching_depth)
-            games += 1
-
-        # Display the number of calls of `run_simulation` and the
-        # time elapsed.
-        self.data.update(games=games, max_depth=self.max_depth,
-                         time=str(time.time() - begin))
-        print 'games: {0}, time ellapsed: {1}'.format(self.data['games'], self.data['time'])
-        print "Maximum depth searched:", self.max_depth
-
-        # Store and display the stats for each possible action.
-        self.data['actions'] = self.calculate_action_values(state, player, legal)
-        for m in self.data['actions']:
-            print self.action_template.format(**m)
-
-        # Pick the action with the highest average value.
+    ##here we go  5.11
         best_action = None
-        if self.max_depth <= max_searching_depth - 2:  # if the algorithm does not converge
+        max_searching_depth = self.max_actions - discs_num
+        if max_searching_depth > 40:
+            #if self.max_depth <= max_searching_depth - 2:  # if the algorithm does not converge
             if player == 1:
                 value, best_action = self.plugged_in_minimax.Max(state, 5, float('-inf'), float('inf'), player)
             else:
                 value, best_action = self.plugged_in_minimax.Min(state, 5, float('-inf'), float('inf'), player)
         else:
+            while time.time() - begin < self.calculation_time:
+                self.run_simulation(max_searching_depth)
+                games += 1
+
+        # Display the number of calls of `run_simulation` and the
+        # time elapsed.
+            self.data.update(games=games, max_depth=self.max_depth,
+                             time=str(time.time() - begin))
+            print 'games: {0}, time ellapsed: {1}'.format(self.data['games'], self.data['time'])
+            print "Maximum depth searched:", self.max_depth
+
+        # Store and display the stats for each possible action.
+            self.data['actions'] = self.calculate_action_values(state, player, legal)
+            for m in self.data['actions']:
+                print self.action_template.format(**m)
+
+        # Pick the action with the highest average value.
+        
+        #if self.max_depth <= max_searching_depth - 2:  # if the algorithm does not converge
+        #    if player == 1:
+        #        value, best_action = self.plugged_in_minimax.Max(state, 5, float('-inf'), float('inf'), player)
+        #    else:
+        #        value, best_action = self.plugged_in_minimax.Min(state, 5, float('-inf'), float('inf'), player)
+        #else:
             best_action = self.data['actions'][0]['action']
+
+
+
+
         return self.board.unpack_action(best_action)
 
     # Here we run the simulation
@@ -120,7 +134,22 @@ class UCT(ai.AI):
                 )
             else:
                 # Otherwise, just make an arbitrary decision.
-                action, state = choice(actions_states)
+                if(len(actions_states)<3):
+                    action, state = choice(actions_states)
+                else:
+                    result=[]
+                    score = []
+                    result,score=eval.evaluation(actions_states)
+                # result = self.eval.evaluation(actions_states)
+                    action, state = choice(result)
+                # for test
+                # print action
+                # print state
+
+
+
+
+
             history_copy.append(state)
 
             # Expand
@@ -156,13 +185,26 @@ class UCTWins(UCT):
         self.end_values = board.win_values
 
     def calculate_action_values(self, state, player, legal):
-        actions_states = ((p, self.board.next_state(state, p)) for p in legal)
+        result=[]
+        score = []
+        actions_states = [(p, self.board.next_state(state, p)) for p in legal]
+        if len(actions_states)<3:
+            result = actions_states
+            score = [0]
+        else:
+            result ,score= eval.evaluation(actions_states)
+        for t in xrange(len(score)):
+	    print result[t]
+            print score[t]
+
+
+        #actions_states = ((p, self.board.next_state(state, p)) for p in legal)
         return sorted(
             ({'action': p,
               'percent': 100 * self.stats[(player, S)].value / self.stats[(player, S)].visits,
               'wins': self.stats[(player, S)].value,
               'plays': self.stats[(player, S)].visits}
-             for p, S in actions_states),
+             for p, S in result),
             key=lambda x: (x['percent'], x['plays']),
             reverse=True
         )

@@ -7,6 +7,7 @@ from math import log, sqrt
 from random import choice
 import ai
 import eval
+import minimax
 
 class Stat(object):
     __slots__ = ('value', 'visits')
@@ -23,7 +24,7 @@ class UCT(ai.AI):
         self.max_depth = 0
         self.data = {}
         self.totalgames=0
-        self.calculation_time = float(kwargs.get('time',30))  # @ST @NOTE Here calculation_time should be 1 min
+        self.calculation_time = float(kwargs.get('time',58))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
 
         # Exploration constant, increase for more exploratory actions,
@@ -50,10 +51,11 @@ class UCT(ai.AI):
 
         games = 0
         begin = time.time()
-        while (time.time() - begin < self.calculation_time) and self.max_depth<(15+int(self.totalgames/5000)):
+
+        while (time.time() - begin < self.calculation_time):
             self.run_simulation()
             games += 1
-        self.totalgames +=games
+        #self.totalgames +=games
         # Display the number of calls of `run_simulation` and the
         # time elapsed.s
         self.data.update(games=games, max_depth=self.max_depth,
@@ -65,9 +67,16 @@ class UCT(ai.AI):
         self.data['actions'] = self.calculate_action_values(state, player, legal)
         for m in self.data['actions']:
             print self.action_template.format(**m)
-
+        #best_action = None
+        #if self.max_depth <= max_searching_depth - 2:  # if the algorithm does not converge
+        #    if player == 1:
+        #        value, best_action = self.plugged_in_minimax.Max(state, 5, float('-inf'), float('inf'), player)
+        #    else:
+        #        value, best_action = self.plugged_in_minimax.Min(state, 5, float('-inf'), float('inf'), player)
+        #else:
+        best_action = self.data['actions'][0]['action']
         # Pick the action with the highest average value.
-        return self.board.unpack_action(self.data['actions'][0]['action'])
+        return self.board.unpack_action(best_action)
 
     def run_simulation(self):
         # Plays out a "random" game from the current position,
@@ -76,7 +85,9 @@ class UCT(ai.AI):
         # A bit of an optimization here, so we have a local
         # variable lookup instead of an attribute access each loop.
         stats = self.stats
-
+        #win_flag  = 1 means no end but predict to win
+        win_flag=0 
+        win_palyer = 0
         visited_states = set()
         history_copy = self.history[:]
         state = history_copy[-1]
@@ -126,8 +137,19 @@ class UCT(ai.AI):
             player = self.board.current_player(state)
             if self.board.is_ended(history_copy):
                 break
-
+            """if t > 20:
+                if score[0] > 500:
+                    win_player = player
+                    win_flag= 1
+                    break
+                elif score[0] < -300 :
+                    win_player = 3 - player
+                    win_flag= 1
+                    break
+                else:
+                    continue"""
         # Back-propagation
+     
         end_values = self.end_values(history_copy)
         for player, state in visited_states:
             if (player, state) not in stats:
@@ -136,6 +158,7 @@ class UCT(ai.AI):
             S.visits += 1
             S.value += end_values[player]
 
+        
 class UCTWins(UCT):
     action_template = "{action}: {percent:.2f}% ({wins} / {plays})"
 

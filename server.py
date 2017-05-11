@@ -175,7 +175,6 @@ class Server(object):
         if data.get('x') == None or data.get('y') == None:
             print "@BUG here", data.get('x'), data.get('y')
             return
-        print data  # @DEBUG
         data_json = "{0}\r\n".format(json.dumps(data))
         socket.sendall(data_json)
 

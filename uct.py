@@ -86,6 +86,7 @@ class UCT(ai.AI):
             #    break
         #if len(self.interesting_legal_actions) < 2 and tmp_index > 0:
         #    self.interesting_legal_actions.append(legal_actions[tmp_index][0])  # append one more action
+        self.interesting_legal_actions = self.interesting_legal_actions[:3]  # we only consider the top 3 actions
         print "selected {0} / {1}".format(len(self.interesting_legal_actions), num_legal_actions)
 
         while time.time() - begin < self.calculation_time:

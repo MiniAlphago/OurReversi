@@ -25,10 +25,10 @@ cdef class Board(object):
                              for r in xrange(cls.rows)
                              for c in xrange(cls.cols))
 
-    def starting_state(self):
+    def starting_state(self, first):
         # p1 placed, p2 placed, previous player, player to move
         return (self.positions[(3,3)] + self.positions[(4,4)],
-                self.positions[(3,4)] + self.positions[(4,3)], 2, 1)
+                self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)
 
     def display(self, state, action, _unicode=True):
         pieces = self.unicode_pieces if _unicode else self.str_pieces

@@ -51,25 +51,65 @@ class Client(object):
         self.black_time = 0
 
         # @ST we need to determine who to put a piece first
-        print(u"Which player do you want to be, 1 {0} or 2 {1}?".format(self.player.board.unicode_pieces[1], self.player.board.unicode_pieces[2]))
-        player = raw_input()
-        print "You are player #{0}.".format(player)
+        first = 1 # who to place a piece first
+        #print(u"Which player do you want to be, 1 {0} or 2 {1}?".format(self.player.board.unicode_pieces[1], self.player.board.unicode_pieces[2]))
+        #player = raw_input()
+        print "waiting for server to send player info..."
+        # who am I
+        raw_message = self.socket.recv(4096)
+        print raw_message  # @DEBUG
+        messages = raw_message.rstrip().split('\r\n')
+        try:
+            data = json.loads(messages[0])  # expect {Black: 0, White: 1} or {Black: 1, White: 0}
+            if int(data['White']) == 1:
+                player = 1
+            else:
+                player = 2
+
+            #if data['type'] not in self.receiver:
+            #    raise ValueError(
+            #        "Unexpected message from server: {0!r}".format(message))
+        except ValueError:  # @ST in case we receive two or more messages
+                raise ValueError("Unexpected message from server: {0!r}".format(message))
+
+
+        print u"You are player #{0} {1}.".format(player, self.player.board.unicode_pieces[player])
         self.player.player = int(player)   # @ST 1 or 2
 
         # @ST create the show gui thread
         if self.use_gui:
             show_gui_thread = self.player.show_gui()
 
+        # who's the first to play
+        raw_message = self.socket.recv(4096)
+        print raw_message  # @DEBUG
+        messages = raw_message.rstrip().split('\r\n')
+        try:
+            data = json.loads(messages[0])  # expect {Black: 0, White: 1} or {Black: 1, White: 0}
+            if int(data['x']) == -2 or int(data['y']) == -2:
+                first = player
+                state = self.player.board.starting_state(first)
+                state = self.player.board.unpack_state(state)
+                self.handle_update({'state': state})
+            else:
+                first = 3 - player
+                state = self.player.board.starting_state(first)
+                state = self.player.board.unpack_state(state)
+                self.handle_update({'state': state})
+                self.handle_opponent_action(data)
+            #if data['type'] not in self.receiver:
+            #    raise ValueError(
+            #        "Unexpected message from server: {0!r}".format(message))
+        except ValueError:  # @ST in case we receive two or more messages
+                raise ValueError("Unexpected message from server: {0!r}".format(message))
         # @ST update the player with the starting state
-        state = self.player.board.starting_state()
-        state = self.player.board.unpack_state(state)
-        self.handle_update({'state': state})
 
         #if self.player.player == 1:
         #    self.handle_my_turn()
 
         while self.running:
             raw_message = self.socket.recv(4096)
+            print "recv:", raw_message
             messages = raw_message.rstrip().split('\r\n')
             if self.use_gui:
                 self.player.status_text_mutex.acquire()
@@ -164,11 +204,10 @@ class Client(object):
             r, c = -1, -1
         else:
             r, c = self.player.board.pack_action(data['message'])
-            r = r + 1
-            c = c + 1
+            r = r
+            c = c
         wrapped_data = {'x': c, 'y': r}
         data_json = "{0}\r\n".format(json.dumps(wrapped_data))
-        #print(data_json)  # @DEBUG
         self.socket.sendall(data_json)
 
     def recv(self, expected_size):
@@ -199,7 +238,7 @@ class Client(object):
     def handle_opponent_action(self, data):
         # @ST unwrapped message
         #print(data)  # @DEBUG
-        action = (int(data['y']) - 1, int(data['x']) - 1)  # @ST [row, col]
+        action = (int(data['y']), int(data['x']))  # @ST [row, col]
         #print(action)  # @DEBUG
         if action[0] < 0 or action[1] < 0:  # @ST your opponent did not put a piece
             # @ST it's our turn to put a piece again
@@ -216,7 +255,7 @@ class Client(object):
         self.player.state_mutex.acquire()
         if not self.player.board.is_legal(self.player.history, action):  # @ST @NOTE here we assume that we do not preempt
             # @ST maybe we have to wait again
-            invalid_msg = '{0}: invalid move at row {1}, column {2}'.format(players_name[data['state']['player'] - 1], action[0] + 1, action[1] + 1)
+            invalid_msg = 'player {0}: invalid move at row {1}, column {2}'.format(players_name[3 - self.player.player], action[0] + 1, action[1] + 1)
             print(invalid_msg)
             if self.use_gui:
                 self.player.status_text_mutex.acquire()

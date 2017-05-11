@@ -114,6 +114,7 @@ def evaluation(actions_states):
     if(t2==0):
         t2=1
 
+
     if(((T[0][1]-t1)/abs(t1))>0.3):
         return results[0:1],score[0:1]
     else:
@@ -121,6 +122,16 @@ def evaluation(actions_states):
             return results[0:2],score[0:2]
         else:
             return results[0:3],score[0:3]
+
+#    if(((T[0][1]-t1)/abs(t1))>0.25):
+#        return results[0:1],score[0:1]
+#    else:
+#        if(((T[0][1]-t2)/abs(t2))>0.35):
+#            return results[0:2],score[0:2]
+#        else:
+#            return results[0:3],score[0:3]
+    return results, score
+
 
 def count_bit(unsigned long b):
     cdef unsigned long FULL_MASK = 0xFFFFFFFFFFFFFFFF

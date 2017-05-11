@@ -25,7 +25,9 @@ class UCT(ai.AI):
 
         self.max_depth = 0
         self.data = {}
+
         time = 58    # should be 1 min but in case that time is over
+
         self.calculation_time = float(time)
         # self.calculation_time = float(kwargs.get('time', 3))  # @ST @NOTE Here calculation_time should be 1 min
         self.max_actions = int(kwargs.get('max_actions', 64))
@@ -36,6 +38,7 @@ class UCT(ai.AI):
 
         self.plugged_in_minimax = minimax.MiniMax(reversi.Board())
         self.minimax_max_depth = 2
+        self.interesting_legal_actions = []
 
     def get_action(self):
 
@@ -45,6 +48,7 @@ class UCT(ai.AI):
         self.max_depth = 0
         self.data = {}
         self.stats.clear()
+        self.interesting_legal_actions[:] = []
 
         state = self.history[-1]
         player = self.board.current_player(state)
@@ -61,6 +65,7 @@ class UCT(ai.AI):
 
         discs_num = self.board.count_discs(self.history[-1])
 
+
     ##here we go  5.11
         best_action = None
         max_searching_depth = self.max_actions - discs_num
@@ -75,6 +80,8 @@ class UCT(ai.AI):
                 self.run_simulation(max_searching_depth)
                 games += 1
 
+       
+
         # Display the number of calls of `run_simulation` and the
         # time elapsed.
             self.data.update(games=games, max_depth=self.max_depth,
@@ -83,6 +90,7 @@ class UCT(ai.AI):
             print "Maximum depth searched:", self.max_depth
 
         # Store and display the stats for each possible action.
+
             self.data['actions'] = self.calculate_action_values(state, player, legal)
             for m in self.data['actions']:
                 print self.action_template.format(**m)
@@ -121,7 +129,10 @@ class UCT(ai.AI):
         # the most important part
         # Use UCB to evaluate the nodes and
         for t in xrange(1, self.max_actions + 1):
-            legal = self.board.legal_actions(history_copy)
+            if t == 1:
+                legal = self.interesting_legal_actions
+            else:
+                legal = self.board.legal_actions(history_copy)
             actions_states = [(p, self.board.next_state(state, p)) for p in legal]
 
             if all((player, S) in stats for p, S in actions_states):

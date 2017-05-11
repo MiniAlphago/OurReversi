@@ -116,6 +116,8 @@ class UCT(ai.AI):
                     result=[]
                     score = []
                     result,score=eval.evaluation(actions_states)
+                    result = result[:3]
+                    score = score[:3]
                 # result = self.eval.evaluation(actions_states)
                     action, state = choice(result)
                 # for test

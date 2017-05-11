@@ -105,9 +105,6 @@ class UCT(ai.AI):
         #else:
             best_action = self.data['actions'][0]['action']
 
-
-
-
         return self.board.unpack_action(best_action)
 
     # Here we run the simulation
@@ -156,10 +153,6 @@ class UCT(ai.AI):
                 # for test
                 # print action
                 # print state
-
-
-
-
 
             history_copy.append(state)
 

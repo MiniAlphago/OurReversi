@@ -69,7 +69,7 @@ class UCT(ai.AI):
     ##here we go  5.11
         best_action = None
         max_searching_depth = self.max_actions - discs_num
-        if max_searching_depth > 40:
+        if max_searching_depth >= 0:
             #if self.max_depth <= max_searching_depth - 2:  # if the algorithm does not converge
             if player == 1:
                 value, best_action = self.plugged_in_minimax.Max(state, 5, float('-inf'), float('inf'), player)
@@ -80,7 +80,7 @@ class UCT(ai.AI):
                 self.run_simulation(max_searching_depth)
                 games += 1
 
-       
+
 
         # Display the number of calls of `run_simulation` and the
         # time elapsed.
@@ -96,7 +96,7 @@ class UCT(ai.AI):
                 print self.action_template.format(**m)
 
         # Pick the action with the highest average value.
-        
+
         #if self.max_depth <= max_searching_depth - 2:  # if the algorithm does not converge
         #    if player == 1:
         #        value, best_action = self.plugged_in_minimax.Max(state, 5, float('-inf'), float('inf'), player)
@@ -125,7 +125,7 @@ class UCT(ai.AI):
 
         # the most important part
         # Use UCB to evaluate the nodes and
-        for t in xrange(1, self.max_actions + 1):    
+        for t in xrange(1, self.max_actions + 1):
             legal = self.board.legal_actions(history_copy)
             actions_states = [(p, self.board.next_state(state, p)) for p in legal]
 

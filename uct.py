@@ -139,7 +139,7 @@ class UCT(ai.AI):
                 )
             else:
                 # Otherwise, just make an arbitrary decision.
-                if(len(actions_states)<6):
+                if(len(actions_states)<3):
                     action, state = choice(actions_states)
                 else:
                     result=[]

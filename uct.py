@@ -69,12 +69,12 @@ class UCT(ai.AI):
     ##here we go  5.11
         best_action = None
         max_searching_depth = self.max_actions - discs_num
-        if max_searching_depth > 40:
+        if max_searching_depth > 30:
             #if self.max_depth <= max_searching_depth - 2:  # if the algorithm does not converge
             if player == 1:
-                value, best_action = self.plugged_in_minimax.Max(state, 5, float('-inf'), float('inf'), player)
+                value, best_action = self.plugged_in_minimax.Max(state, 7, float('-inf'), float('inf'), player)
             else:
-                value, best_action = self.plugged_in_minimax.Min(state, 5, float('-inf'), float('inf'), player)
+                value, best_action = self.plugged_in_minimax.Min(state, 7, float('-inf'), float('inf'), player)
         else:
             while time.time() - begin < self.calculation_time:
                 self.run_simulation(max_searching_depth)

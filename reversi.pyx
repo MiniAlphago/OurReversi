@@ -4,7 +4,7 @@
 import re
 import string
 
-class Board(object):
+cdef class Board(object):
     num_players = 2
     rows = cols = 8
 
@@ -25,10 +25,10 @@ class Board(object):
                              for r in xrange(cls.rows)
                              for c in xrange(cls.cols))
 
-    def starting_state(self):
+    def starting_state(self, first):
         # p1 placed, p2 placed, previous player, player to move
         return (self.positions[(3,3)] + self.positions[(4,4)],
-                self.positions[(3,4)] + self.positions[(4,3)], 2, 1)
+                self.positions[(3,4)] + self.positions[(4,3)], 3 - first, first)
 
     def display(self, state, action, _unicode=True):
         pieces = self.unicode_pieces if _unicode else self.str_pieces
@@ -58,21 +58,27 @@ class Board(object):
         actions = set(self.legal_actions(history))
         return action in actions
 
-    def legal_actions(self, history):
+    cpdef legal_actions(self, history):
         ## Kogge-Stone algorithm
-        p1_placed, p2_placed, previous, player = history[-1]
-        occupied = p1_placed | p2_placed
-        empty = 0xffffffffffffffff ^ occupied
+        state = history[-1]
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int previous = state[2]
+        cdef int player = state[3]
 
-        mask_a = 0xfefefefefefefefe
-        mask_h = 0x7f7f7f7f7f7f7f7f
+        cdef unsigned long occupied = p1_placed | p2_placed
+        cdef unsigned long empty = 0xffffffffffffffff ^ occupied
 
-        mine = p1_placed if player == 1 else p2_placed
-        opp = p2_placed if player == 1 else p1_placed
-        legal = 0
+        cdef unsigned long mask_a = 0xfefefefefefefefe
+        cdef unsigned long mask_h = 0x7f7f7f7f7f7f7f7f
+
+        cdef unsigned long mine = p1_placed if player == 1 else p2_placed
+        cdef unsigned long opp = p2_placed if player == 1 else p1_placed
+        cdef unsigned long legal = 0
 
         # N
-        g, p = mine, opp
+        cdef unsigned long g = mine
+        cdef unsigned long p = opp
         g |= p & (g >> 8)
         p &= (p >> 8)
         g |= p & (g >> 16)
@@ -152,17 +158,22 @@ class Board(object):
     def current_player(self, state):
         return state[-1]
 
-    def is_ended(self, history):
+    cpdef is_ended(self, history):
         state = history[-1]
-        p1_placed, p2_placed, previous, player = state
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int previous = state[2]
+        cdef int player = state[3]
+        cdef int rows = self.rows
+        cdef int cols = self.cols
 
         if p2_placed == 0:
             return True
         if p1_placed == 0:
             return True
 
-        occupied = p1_placed | p2_placed
-        return (occupied == (1 << (self.rows * self.cols)) - 1 or
+        cdef unsigned long occupied = p1_placed | p2_placed
+        return (occupied == (1 << (rows * cols)) - 1 or
                 not self.legal_actions([state]))
 
     def win_values(self, history):
@@ -193,6 +204,15 @@ class Board(object):
         p2_score = bin(p2_placed).count('1')
 
         return {1: p1_score, 2: p2_score}
+
+    cpdef count_discs(self, state):
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int count;
+        cdef int p1_score = bin(p1_placed).count('1')
+        cdef int p2_score = bin(p2_placed).count('1')
+        count = p1_score + p2_score
+        return count
 
     def not_ended_points_values(self, history):
         state = history[-1]
@@ -251,22 +271,37 @@ class Board(object):
         r, c = action
         return 'abcdefgh'[c] + str(r+1)
 
-    def next_state(self, state, action):
-        P = self.positions[action]
-        p1_placed, p2_placed, previous, player = state
+    cpdef next_state(self, state, action):
+        cdef unsigned long P = self.positions[action]
+        cdef unsigned long p1_placed = state[0]
+        cdef unsigned long p2_placed = state[1]
+        cdef int previous = state[2]
+        cdef int player = state[3]
 
-        occupied = p1_placed | p2_placed
-        empty = 0xffffffffffffffff ^ occupied
 
-        mask_a = 0xfefefefefefefefe
-        mask_h = 0x7f7f7f7f7f7f7f7f
+        cdef unsigned long occupied = p1_placed | p2_placed
+        cdef unsigned long empty = 0xffffffffffffffff ^ occupied
 
-        mine = p1_placed if player == 1 else p2_placed
-        opp = p2_placed if player == 1 else p1_placed
-        flips = 0
+        cdef unsigned long mask_a = 0xfefefefefefefefe
+        cdef unsigned long mask_h = 0x7f7f7f7f7f7f7f7f
+
+        cdef unsigned long mine = 0
+        if player == 1:
+            mine = p1_placed
+        else:
+            mine = p2_placed
+
+        cdef unsigned long opp = 0
+        if player == 1:
+            opp = p2_placed
+        else:
+            opp = p1_placed
+
+        cdef unsigned long flips = 0
 
         # N
-        g, p = P, opp
+        cdef unsigned long g= P
+        cdef unsigned long p = opp
         g |= p & (g >> 8)
         p &= (p >> 8)
         g |= p & (g >> 16)
